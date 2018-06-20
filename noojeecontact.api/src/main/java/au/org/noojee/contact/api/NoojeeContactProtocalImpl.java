@@ -49,7 +49,7 @@ public class NoojeeContactProtocalImpl
 		URL url = null;
 		try
 		{
-			url = new URL("https://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey + (query != null ? query : ""));
+			url = new URL("https://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey + (query != null ? "&" + query : ""));
 		}
 		catch (MalformedURLException e)
 		{

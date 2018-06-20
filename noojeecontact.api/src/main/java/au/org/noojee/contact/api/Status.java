@@ -6,6 +6,12 @@ public class Status
 
 	private String message;
 
+	public Status(int code, String message)
+	{
+		this.code = code;
+		this.message = message;
+	}
+
 	/**
 	 * @return the code
 	 */

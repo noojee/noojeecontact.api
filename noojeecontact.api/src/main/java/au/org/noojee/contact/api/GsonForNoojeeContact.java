@@ -51,6 +51,16 @@ public class GsonForNoojeeContact
 
 		return list;
 	}
+	
+	public static <E> E fromJsonTypedObject(String responseBody, Type type)
+	{
+		Gson gson = create();
+
+		E object = gson.fromJson(responseBody, type);
+
+		return object;
+	}
+
 
 	// public static <E> Map<String, List<E>> fromJson(String responseBody, Type listType)
 	// {
