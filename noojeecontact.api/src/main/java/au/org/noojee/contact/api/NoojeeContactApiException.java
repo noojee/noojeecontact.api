@@ -29,7 +29,7 @@ public class NoojeeContactApiException extends Exception
 		this.errorMessage = errorMessage;
 	}
 	
-	int getErrorCode()
+	public int getErrorCode()
 	{
 		return errorCode;
 	}
