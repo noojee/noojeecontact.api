@@ -95,6 +95,8 @@ public class NoojeeContactProtocalImpl
 			connection.setDoOutput(true);
 			connection.setAllowUserInteraction(false); // no users here so don't do
 														// anything silly.
+			
+			connection.setConnectTimeout(5000);
 
 			connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 			

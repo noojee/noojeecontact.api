@@ -27,10 +27,10 @@ public class NoojeeContactApi
 	}
 
 
-	public Status getStatus()
+	public NoojeeContactStatistics getStatistics()
 			throws NoojeeContactApiException
 	{
-		Status status = null;
+		NoojeeContactStatistics status = null;
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
@@ -38,7 +38,7 @@ public class NoojeeContactApi
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
-		status = GsonForNoojeeContact.fromJson(response.getResponseBody(), Status.class);
+		status = GsonForNoojeeContact.fromJson(response.getResponseBody(), NoojeeContactStatistics.class);
 
 		return status;
 	}
