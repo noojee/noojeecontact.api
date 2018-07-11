@@ -50,17 +50,17 @@ public class NoojeeContactStatistics
 	/**
 	 * @return the ioWait
 	 */
-	public double getIoWait()
+	public long getIoWait()
 	{
-		return statistics.get(0).ioWait;
+		return (long)statistics.get(0).ioWait;
 	}
 
 	/**
 	 * @return the loadAverage
 	 */
-	public double getLoadAverage()
+	public long getLoadAverage()
 	{
-		return statistics.get(0).loadAverage;
+		return (long)statistics.get(0).loadAverage;
 	}
 
 	/**
@@ -122,9 +122,9 @@ public class NoojeeContactStatistics
 	/**
 	 * @return the steal
 	 */
-	public double getSteal()
+	public long getSteal()
 	{
-		return statistics.get(0).steal;
+		return (long)statistics.get(0).steal;
 	}
 
 	/**
