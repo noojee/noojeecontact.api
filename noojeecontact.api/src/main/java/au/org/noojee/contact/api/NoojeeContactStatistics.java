@@ -1,5 +1,7 @@
 package au.org.noojee.contact.api;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -11,23 +13,26 @@ public class NoojeeContactStatistics
 	private int code;
 
 	private String message;
-	
+
 	// There will only ever be one entry returned!
 	@SerializedName("entities")
-	private List<NoojeeStatistics>statistics;
-	
-	
+	private List<NoojeeStatistics> statistics;
+
 	public NoojeeContactStatistics(int code, String message)
 	{
 		this.code = code;
 		this.message = message;
 	}
-	
-	
+
 	// Support for older version of the api that don't provide statistics.
 	public boolean hasStatistics()
 	{
 		return statistics != null && statistics.size() > 0;
+	}
+
+	private NoojeeStatistics get()
+	{
+		return statistics.get(0);
 	}
 
 	/**
@@ -45,38 +50,37 @@ public class NoojeeContactStatistics
 	{
 		return message;
 	}
-	
 
 	/**
 	 * @return the ioWait
 	 */
 	public long getIoWait()
 	{
-		return (long)statistics.get(0).ioWait;
+		return (long) get().ioWait;
 	}
 
 	/**
 	 * @return the loadAverage
 	 */
-	public long getLoadAverage()
+	public Long getLoadAverage()
 	{
-		return (long)statistics.get(0).loadAverage;
+		return Long.valueOf((long) (get().loadAverage));
 	}
 
 	/**
 	 * @return the cpuPercent
 	 */
-	public int getCpuPercent()
+	public Long getCpuPercent()
 	{
-		return statistics.get(0).cpuPercent;
+		return Long.valueOf((long) (get().cpuPercent));
 	}
 
 	/**
 	 * @return the cores
 	 */
-	public int getCores()
+	public long getCores()
 	{
-		return statistics.get(0).cores;
+		return get().cores;
 	}
 
 	/**
@@ -84,7 +88,7 @@ public class NoojeeContactStatistics
 	 */
 	public long getMemoryAvailableMB()
 	{
-		return statistics.get(0).memoryAvailableMB;
+		return get().memoryAvailableMB;
 	}
 
 	/**
@@ -92,31 +96,31 @@ public class NoojeeContactStatistics
 	 */
 	public long getMemoryTotalMB()
 	{
-		return statistics.get(0).memoryTotalMB;
+		return get().memoryTotalMB;
 	}
 
 	/**
 	 * @return the freeDiskSpacePercent
 	 */
-	public int getFreeDiskSpacePercent()
+	public Long getFreeDiskSpacePercent()
 	{
-		return statistics.get(0).freeDiskSpacePercent;
+		return Long.valueOf((long) (get().freeDiskSpacePercent));
 	}
 
 	/**
 	 * @return the threadPoolUsagePercent
 	 */
-	public int getThreadPoolUsagePercent()
+	public Long getThreadPoolUsagePercent()
 	{
-		return statistics.get(0).threadPoolUsagePercent;
+		return Long.valueOf((long) (get().threadPoolUsagePercent));
 	}
 
 	/**
 	 * @return the schedulerPoolUsagePercent
 	 */
-	public int getSchedulerPoolUsagePercent()
+	public Long getSchedulerPoolUsagePercent()
 	{
-		return statistics.get(0).schedulerPoolUsagePercent;
+		return Long.valueOf((long) (get().schedulerPoolUsagePercent));
 	}
 
 	/**
@@ -124,7 +128,7 @@ public class NoojeeContactStatistics
 	 */
 	public long getSteal()
 	{
-		return (long)statistics.get(0).steal;
+		return (long) get().steal;
 	}
 
 	/**
@@ -132,11 +136,11 @@ public class NoojeeContactStatistics
 	 */
 	public Map<String, Double> getTrunkLag()
 	{
-		return statistics.get(0).trunkLag;
+		return get().trunkLag;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -145,27 +149,82 @@ public class NoojeeContactStatistics
 		return "Status [code=" + code + ", message=" + message + "]";
 	}
 
+	public boolean didBackupSucceed()
+	{
+		NoojeeStatistics stats = get();
 
-	
+		LocalDateTime now = LocalDateTime.now();
+
+		boolean success = true;
+
+		if (!isBackupRunning())
+		{
+			if (stats.lastBackupSuccess.isBefore(stats.lastBackupAttempt))
+				success = false;
+
+			LocalDateTime midnight = LocalDate.now().atStartOfDay();
+			LocalDateTime _7am = LocalDate.now().atStartOfDay().plusHours(7);
+
+			if (now.isAfter(_7am))
+			{
+				// no attempt in 24 hours.
+				if (stats.lastBackupAttempt.isBefore(midnight))
+					success = false;
+			}
+		}
+
+		return success;
+	}
+
+	public boolean isBackupRunning()
+	{
+		NoojeeStatistics stats = get();
+
+		LocalDateTime now = LocalDateTime.now();
+		return stats.backupStarting.plusHours(1).isAfter(now);
+	}
+
 	public class NoojeeStatistics
 	{
 		double ioWait;
 		double loadAverage;
 		int cpuPercent;
-		int	cores;
+		int cores;
 		long memoryAvailableMB;
 		long memoryTotalMB;
-		
+
 		int freeDiskSpacePercent;
 		int threadPoolUsagePercent;
 		int schedulerPoolUsagePercent;
 		double steal;
+
+		double dbPoolSize;
+		double dbPoolUsage;
+
+		// Last time the a db back was attempted
+		LocalDateTime lastBackupAttempt; // date yyyy/MM/dd HH:mm
+		// Last time a db back succeeded
+		LocalDateTime lastBackupSuccess; // date yyyy/MM/dd HH:mm
+
+		// the time when a backup starts - this includes recording backup.
+		// Most backups take no longer than 30 minutes these days as we are duing
+		// recording migration off the back of a call completing.
+		LocalDateTime backupStarting; // date yyyy/MM/dd HH:mm
+
 		// One entry per trunk
-		
-		@SerializedName("entities")
+		@SerializedName("pingData") // ? pingData
 		Map<String, Double> trunkLag; // IPAddress:lag in milliseconds.
-		
-		
-		
+
 	}
+
+	public Long getDbPoolSize()
+	{
+		return Long.valueOf((long) (get().dbPoolSize));
+	}
+
+	public long getDbPoolUsage()
+	{
+		return (long) get().dbPoolUsage;
+	}
+
 }

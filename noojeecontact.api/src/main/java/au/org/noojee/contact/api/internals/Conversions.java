@@ -1,4 +1,4 @@
-package au.org.noojee.contact.api;
+package au.org.noojee.contact.api.internals;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -9,17 +9,14 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.Locale;
-
-import javax.money.CurrencyUnit;
-import javax.money.Monetary;
 
 import org.apache.logging.log4j.util.Strings;
-import org.javamoney.moneta.Money;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 
 public interface Conversions
 {
-	static final CurrencyUnit currencyUnit = Monetary.getCurrency(Locale.getDefault());
+	static final CurrencyUnit currencyUnit =CurrencyUnit.AUD;
 
 	/**
 	 * Local Date
@@ -97,20 +94,20 @@ public interface Conversions
 
 	public static Money toMoney(double value)
 	{
-		return Money.of(value, currencyUnit);
+		return Money.of(currencyUnit, value);
 	}
 
 	public static Money toMoney(String value)
 	{
 		if (Strings.isBlank(value))
-			return Money.of(new BigDecimal("0"), currencyUnit);
+			return Money.zero(currencyUnit);
 		
-		return Money.of(new BigDecimal(value), currencyUnit);
+		return Money.of(currencyUnit, new BigDecimal(value));
 	}
 
 	public static Money toMoney(BigDecimal value)
 	{
-		return Money.of(value, currencyUnit);
+		return Money.of(currencyUnit, value);
 	}
 
 

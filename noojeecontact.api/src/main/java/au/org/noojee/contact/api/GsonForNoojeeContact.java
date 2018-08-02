@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.javamoney.moneta.Money;
+import org.joda.money.Money;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -20,6 +20,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+
+import au.org.noojee.contact.api.internals.Conversions;
 
 public class GsonForNoojeeContact
 {
@@ -51,7 +53,7 @@ public class GsonForNoojeeContact
 
 		return list;
 	}
-	
+
 	public static <E> E fromJsonTypedObject(String responseBody, Type type)
 	{
 		Gson gson = create();
@@ -60,7 +62,6 @@ public class GsonForNoojeeContact
 
 		return object;
 	}
-
 
 	// public static <E> Map<String, List<E>> fromJson(String responseBody, Type listType)
 	// {
@@ -155,9 +156,21 @@ public class GsonForNoojeeContact
 			// LocalDateTime localDateTime = Conversions.toLocalDateTime(json.getAsLong());
 			// "2016-05-10T03:36:34.615Z
 
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+			String value = json.getAsString();
 
-			LocalDateTime localDateTime = LocalDateTime.parse(json.getAsString().substring(0, 19), formatter);
+			DateTimeFormatter formatter;
+
+			if (value.length() == 16)
+				formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+			else
+				formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+			
+			if (value.length() > 19)
+				value = value.substring(0, 19);
+
+			value = value.replace("/", "-");
+			
+			LocalDateTime localDateTime = LocalDateTime.parse(value, formatter);
 
 			// String date = json.getAsString();
 			// if (date.endsWith("Z"))
@@ -179,7 +192,7 @@ public class GsonForNoojeeContact
 
 		public JsonElement serialize(Money money, Type typeOfSrc, JsonSerializationContext context)
 		{
-			String stringMoney = money.getNumberStripped().toPlainString();
+			String stringMoney = "" + money.getAmountMajorLong() + "." + money.getAmountMinorLong();
 			return new JsonPrimitive(stringMoney);
 		}
 	}
