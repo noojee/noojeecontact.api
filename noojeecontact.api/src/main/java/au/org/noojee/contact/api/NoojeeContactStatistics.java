@@ -198,8 +198,8 @@ public class NoojeeContactStatistics
 		int schedulerPoolUsagePercent;
 		double steal;
 
-		double dbPoolSize;
-		double dbPoolUsage;
+		long dbPoolSize;
+		long dbPoolUsage;
 
 		// Last time the a db back was attempted
 		LocalDateTime lastBackupAttempt; // date yyyy/MM/dd HH:mm
@@ -224,7 +224,15 @@ public class NoojeeContactStatistics
 
 	public long getDbPoolUsage()
 	{
-		return (long) get().dbPoolUsage;
+		return get().dbPoolUsage;
+	}
+
+	public long getDbPoolPercentage()
+	{
+		if (getDbPoolSize() == 0)
+			return 0;
+		else
+			return getDbPoolUsage() * 100 / getDbPoolSize();
 	}
 
 }
