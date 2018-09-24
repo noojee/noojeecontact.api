@@ -18,7 +18,7 @@ public class NoojeeContactProtocalImpl
 	private Logger logger = LogManager.getLogger();
 	public static final int PAGE_SIZE = 50;
 
-	private static NoojeeContactProtocalImpl self;
+	private static volatile NoojeeContactProtocalImpl self;
 	
 	public enum HTTPMethod
 	{
