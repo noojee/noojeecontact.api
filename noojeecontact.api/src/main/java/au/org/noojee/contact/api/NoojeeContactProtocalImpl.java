@@ -30,7 +30,7 @@ public class NoojeeContactProtocalImpl
 		return NoojeeContactProtocalImpl.self;
 	}
 
-	static public void init()
+	static synchronized public void init()
 	{
 		if (self == null)
 		{

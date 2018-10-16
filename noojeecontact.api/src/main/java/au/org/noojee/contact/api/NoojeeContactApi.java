@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.reflect.TypeToken;
 
 import au.org.noojee.contact.api.NoojeeContactProtocalImpl.HTTPMethod;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class NoojeeContactApi
 {
@@ -81,6 +82,7 @@ public class NoojeeContactApi
 		int code;
 		String message;
 		
+		@SuppressFBWarnings
 		List<E> entities;
 
 		public List<E> getList()
