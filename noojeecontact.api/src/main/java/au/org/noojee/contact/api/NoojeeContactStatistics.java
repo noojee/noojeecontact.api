@@ -72,7 +72,7 @@ public class NoojeeContactStatistics
 	 */
 	public Long getCpuPercent()
 	{
-		return Long.valueOf((long) (get().cpuPercent));
+		return Long.valueOf((get().cpuPercent));
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class NoojeeContactStatistics
 	 */
 	public Long getFreeDiskSpacePercent()
 	{
-		return Long.valueOf((long) (get().freeDiskSpacePercent));
+		return Long.valueOf((get().freeDiskSpacePercent));
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class NoojeeContactStatistics
 	 */
 	public Long getThreadPoolUsagePercent()
 	{
-		return Long.valueOf((long) (get().threadPoolUsagePercent));
+		return Long.valueOf((get().threadPoolUsagePercent));
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class NoojeeContactStatistics
 	 */
 	public Long getSchedulerPoolUsagePercent()
 	{
-		return Long.valueOf((long) (get().schedulerPoolUsagePercent));
+		return Long.valueOf((get().schedulerPoolUsagePercent));
 	}
 
 	/**
@@ -219,7 +219,7 @@ public class NoojeeContactStatistics
 
 	public Long getDbPoolSize()
 	{
-		return Long.valueOf((long) (get().dbPoolSize));
+		return Long.valueOf((get().dbPoolSize));
 	}
 
 	public long getDbPoolUsage()
@@ -231,8 +231,7 @@ public class NoojeeContactStatistics
 	{
 		if (getDbPoolSize() == 0)
 			return 0;
-		else
-			return getDbPoolUsage() * 100 / getDbPoolSize();
+		return getDbPoolUsage() * 100 / getDbPoolSize();
 	}
 
 }

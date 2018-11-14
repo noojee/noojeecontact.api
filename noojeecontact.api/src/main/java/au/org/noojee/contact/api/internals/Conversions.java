@@ -79,11 +79,8 @@ public interface Conversions
 	{
 		if (time == null || time.trim().length() == 0)
 			return null;
-		else
-		{
-			DateTimeFormatter dtf =  DateTimeFormatter.ofPattern("h:mma");
-			return LocalTime.parse(time.toUpperCase(), dtf);
-		}
+		DateTimeFormatter dtf =  DateTimeFormatter.ofPattern("h:mma");
+		return LocalTime.parse(time.toUpperCase(), dtf);
 	}
 
 	public static Duration toDuration(String days)

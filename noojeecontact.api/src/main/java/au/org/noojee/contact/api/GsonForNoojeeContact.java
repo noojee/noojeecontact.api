@@ -102,6 +102,7 @@ public class GsonForNoojeeContact
 	static private class LocalDateSerializer implements JsonSerializer<LocalDate>
 	{
 
+		@Override
 		public JsonElement serialize(LocalDate date, Type typeOfSrc, JsonSerializationContext context)
 		{
 			Long longDate = Conversions.toLong(date);
@@ -139,6 +140,7 @@ public class GsonForNoojeeContact
 	static private class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime>
 	{
 
+		@Override
 		public JsonElement serialize(LocalDateTime date, Type typeOfSrc, JsonSerializationContext context)
 		{
 			Long longDate = Conversions.toLong(date);
@@ -190,6 +192,7 @@ public class GsonForNoojeeContact
 	static private class MoneySerializer implements JsonSerializer<Money>
 	{
 
+		@Override
 		public JsonElement serialize(Money money, Type typeOfSrc, JsonSerializationContext context)
 		{
 			String stringMoney = "" + money.getAmountMajorLong() + "." + money.getAmountMinorLong();
