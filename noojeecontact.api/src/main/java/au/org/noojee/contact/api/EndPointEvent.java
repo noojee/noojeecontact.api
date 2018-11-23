@@ -23,6 +23,12 @@ public class EndPointEvent
 	{
 		return new EndPoint(extensionNo);
 	}
+	
+	public UniqueCallId getUniqueCallId()
+	{
+		return event.CallData.uniqueCallId;
+	}
+	
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -66,6 +72,7 @@ public class EndPointEvent
 			return false;
 		return true;
 	}
+
 	
 	
 

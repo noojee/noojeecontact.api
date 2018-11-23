@@ -199,7 +199,7 @@ public class NoojeeContactApi
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
 
-		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null);
+		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
 		SubscribeResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SubscribeResponse.class);
 

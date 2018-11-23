@@ -1,11 +1,14 @@
 package au.org.noojee.contact.api;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
@@ -21,7 +24,10 @@ public enum ActivityMonitor
 
 	NoojeeContactApi api;
 
-	List<Subscriber> subscribers = Collections.synchronizedList(new ArrayList<>());
+	/**
+	 * Each EndPoint can have multiple subscribers.
+	 */
+	Map<EndPoint, List<Subscriber>> subscriptions = Collections.synchronizedMap(new HashMap<>());
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
@@ -78,44 +84,38 @@ public enum ActivityMonitor
 
 		while (running.get() == true)
 		{
-			Set<EndPoint> endPoints = new HashSet<>();
-			
-			for (Subscriber subscriber : subscribers)
-			{
-				endPoints.addAll(subscriber.getEndPoints());
-			}
+			Set<EndPoint> endPoints = subscriptions.keySet();
 
 			try
 			{
 				SubscribeResponse response = api.subscribe(endPoints.stream().collect(Collectors.toList()));
-				
+
 				List<EndPointEvent> events = response.getEvents();
-				
+
 				for (EndPointEvent event : events)
 				{
 					EndPoint endPoint = event.getEndPoint();
 					switch (event.getStatus())
 					{
 						case Connected:
-							notifyAnswer(endPoint);
+							notifyAnswer(endPoint, event);
 							break;
 						case DialingOut:
-							notifyDialing(endPoint);
+							notifyDialing(endPoint, event);
 							break;
 						case Hungup:
-							notifyHangup(endPoint);
+							notifyHangup(endPoint, event);
 							break;
 						case Ringing:
-							notifyRinging(endPoint);
+							notifyRinging(endPoint, event);
 							break;
 						default:
 							System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
 							break;
 					}
-					
+
 				}
-				
-				
+
 			}
 			catch (NoojeeContactApiException e)
 			{
@@ -126,61 +126,104 @@ public enum ActivityMonitor
 		}
 
 	}
-	
+
+	void subscribe(EndPoint endPoint, Subscriber subscriber)
+	{
+
+		synchronized (subscriptions)
+		{
+			if (subscriptions.containsKey(endPoint))
+			{
+				List<Subscriber> subscribers = subscriptions.get(endPoint);
+
+				if (subscribers.contains(subscriber))
+					throw new IllegalStateException("The passed subscriber is already subscribed");
+
+				subscribers.add(subscriber);
+			}
+			else
+			{
+				List<Subscriber> subscribers = new ArrayList<>();
+				subscribers.add(subscriber);
+				subscriptions.put(endPoint, subscribers);
+			}
+		}
+
+	}
 
 	private void notifyError(NoojeeContactApiException e)
 	{
-		subscribers.stream().forEach(subscriber -> subscriber.onError(e));
+
+		List<Subscriber> subscribers = getCopyOfAllSubscribers();
+
+		subscribers.forEach(subscriber -> subscriber.onError(e));
 	}
 
-	void subscribe(Subscriber subscriber)
+	private void notifyHangup(EndPoint endPoint, EndPointEvent event)
 	{
-		subscribers.add(subscriber);
-	}
 
-	private void notifyReconnect()
-	{
-		subscribers.stream().forEach(subscriber -> subscriber.reconnected());
-	}
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-	private void notifyDisconnected()
-	{
-		subscribers.stream().forEach(subscriber -> subscriber.disconnected());
-	}
-
-	private void notifyHangup(EndPoint endPoint)
-	{
-		subscribers.stream().forEach(subscriber ->
+		subscribers.forEach(subscriber ->
 			{
-				if (subscriber.isInterested(endPoint))
-					subscriber.hungup(endPoint);
+				subscriber.hungup(endPoint, event);
 			});
 	}
 
-	private void notifyDialing(EndPoint endPoint)
+	private List<Subscriber> getCopyOfSubscribers(EndPoint endPoint)
 	{
-		subscribers.stream().forEach(subscriber ->
+		List<Subscriber> subscribers = null;
+
+		synchronized (subscriptions)
+		{
+			subscribers = subscriptions.get(endPoint).stream().collect(Collectors.toList());
+		}
+		return subscribers;
+
+	}
+
+	private List<Subscriber> getCopyOfAllSubscribers()
+	{
+		List<Subscriber> subscribers = new ArrayList<>();
+
+		synchronized (subscriptions)
+		{
+			for (EndPoint endPoint : subscriptions.keySet())
 			{
-				if (subscriber.isInterested(endPoint))
-					subscriber.dialing(endPoint);
+				subscribers.addAll(subscriptions.get(endPoint).stream().collect(Collectors.toList()));
+			}
+		}
+		return subscribers;
+
+	}
+
+	private void notifyDialing(EndPoint endPoint, EndPointEvent event)
+	{
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+
+		subscribers.forEach(subscriber ->
+			{
+				subscriber.dialing(endPoint, event);
 			});
 	}
 
-	private void notifyRinging(EndPoint endPoint)
+	private void notifyRinging(EndPoint endPoint, EndPointEvent event)
 	{
-		subscribers.stream().forEach(subscriber ->
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+
+		subscribers.forEach(subscriber ->
 			{
-				if (subscriber.isInterested(endPoint))
-					subscriber.ringing(endPoint);
+				subscriber.ringing(endPoint, event);
 			});
 	}
 
-	private void notifyAnswer(EndPoint endPoint)
+	private void notifyAnswer(EndPoint endPoint, EndPointEvent event)
 	{
-		subscribers.stream().forEach(subscriber ->
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+
+		subscribers.forEach(subscriber ->
 			{
-				if (subscriber.isInterested(endPoint))
-					subscriber.answered(endPoint);
+				subscriber.answered(endPoint, event);
 			});
 	}
 

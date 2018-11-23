@@ -1,26 +1,16 @@
 package au.org.noojee.contact.api;
 
-import java.util.List;
-
 public interface Subscriber
 {
+	void dialing(EndPoint endPoint, EndPointEvent event);
 
-	void reconnected();
+	void ringing(EndPoint endPoint, EndPointEvent event);
 
-	void disconnected();
+	void answered(EndPoint endPoint, EndPointEvent event);
 
-	boolean isInterested(EndPoint endPoint);
-
-	void hungup(EndPoint endPoint);
-
-	void ringing(EndPoint endPoint);
-
-	void answered(EndPoint endPoint);
-
-	List<EndPoint> getEndPoints();
+	void hungup(EndPoint endPoint, EndPointEvent event);
 
 	void onError(NoojeeContactApiException e);
 
-	void dialing(EndPoint endPoint);
 
 }
