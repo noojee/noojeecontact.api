@@ -61,12 +61,18 @@ public class NoojeeContactProtocalImpl
 	}
 
 
-
+	
 	HTTPResponse request(HTTPMethod method, URL url, String jsonBody) throws NoojeeContactApiException
+	{
+		return request(method, url, jsonBody,  "application/json");
+	}
+
+
+	HTTPResponse request(HTTPMethod method, URL url, String jsonBody, String contentType) throws NoojeeContactApiException
 	{
 
 		HTTPResponse response;
-		response = _request(method, url, jsonBody);
+		response = _request(method, url, jsonBody, contentType);
 
 		if (response.getResponseCode() >= 300)
 		{
@@ -75,13 +81,14 @@ public class NoojeeContactProtocalImpl
 
 		return response;
 	}
-
+	
+	
 	/**
 	 * Returns a raw response string.
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	private HTTPResponse _request(HTTPMethod method, URL url, String jsonBody) throws NoojeeContactApiException
+	private HTTPResponse _request(HTTPMethod method, URL url, String jsonBody, String contentType) throws NoojeeContactApiException
 	{
 		HTTPResponse response = null;
 
@@ -98,7 +105,7 @@ public class NoojeeContactProtocalImpl
 			
 			connection.setConnectTimeout(5000);
 
-			connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+			connection.setRequestProperty("Content-Type", contentType + "; charset=UTF-8");
 			
 			connection.connect();
 
