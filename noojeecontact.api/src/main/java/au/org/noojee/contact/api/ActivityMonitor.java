@@ -97,10 +97,10 @@ public enum ActivityMonitor
 		{
 			// lock threads out until doSubscribe has a chance to get a copy
 			// of 'future'.
-			logger.error("Acquiring semaphore id:" + Thread.currentThread().getId());
-			
+			// logger.error("Acquiring semaphore id:" + Thread.currentThread().getId());
+
 			semaphore.acquire();
-			logger.error("Acquired semaphore id:" + Thread.currentThread().getId());
+			// logger.error("Acquired semaphore id:" + Thread.currentThread().getId());
 			future = subscriptionLoopPool.submit(() -> doSubscribe());
 		}
 		catch (InterruptedException e)
@@ -116,7 +116,7 @@ public enum ActivityMonitor
 		// we have our own copy of future so we can let other threads in now.
 		Future<Void> myfuture = future;
 		semaphore.release();
-		logger.error("Released semaphore id:" + Thread.currentThread().getId());
+		// logger.error("Released semaphore id:" + Thread.currentThread().getId());
 
 		try
 		{
@@ -170,36 +170,46 @@ public enum ActivityMonitor
 		return null;
 	}
 
-	synchronized void subscribe(EndPoint endPoint, Subscriber subscriber)
+	synchronized void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
 			throw new IllegalStateException("The Montior is not running. Call ActivityMonitor.start()");
 
-		if (subscriptions.containsKey(endPoint))
+		boolean foundNewOne = false;
+		for (EndPoint endPoint : endPoints)
 		{
-			List<Subscriber> subscribers = subscriptions.get(endPoint);
+			if (subscriptions.containsKey(endPoint))
+			{
+				List<Subscriber> subscribers = subscriptions.get(endPoint);
 
-			if (subscribers.contains(subscriber))
-				throw new IllegalStateException("The passed subscriber is already subscribed");
+				if (subscribers.contains(subscriber))
+					throw new IllegalStateException("The passed subscriber is already subscribed");
 
-			subscribers.add(subscriber);
+				subscribers.add(subscriber);
+			}
+			else
+			{
+				// new subsriber
+				List<Subscriber> subscribers = new ArrayList<>();
+				subscribers.add(subscriber);
+				subscriptions.put(endPoint, subscribers);
+
+				foundNewOne = true;
+
+			}
+			logger.error("Added subscription for: " + endPoint.extensionNo);
 		}
-		else
-		{
-			// new subsriber
-			List<Subscriber> subscribers = new ArrayList<>();
-			subscribers.add(subscriber);
-			subscriptions.put(endPoint, subscribers);
 
+		if (foundNewOne)
+		{
 			// We need to replace the current subscribe loop as
 			// we now have a new subscription to support.
 			if (future != null)
 				future.cancel(true);
-			logger.error("Starting new subscribeLoop: " + endPoint.extensionNo);
+			logger.error("Starting new subscribeLoop");
 			subscribeLoop();
-		}
 
-		logger.error("Added subscription for: " + endPoint.extensionNo);
+		}
 
 	}
 
