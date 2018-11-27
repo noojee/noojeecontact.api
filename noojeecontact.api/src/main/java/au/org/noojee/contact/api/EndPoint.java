@@ -2,8 +2,8 @@ package au.org.noojee.contact.api;
 
 public class EndPoint
 {
-	String extensionNo;
-	String tech;
+	final String extensionNo;
+	final String tech;
 
 	public EndPoint(String extensionNo)
 	{

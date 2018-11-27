@@ -5,8 +5,8 @@ import au.org.noojee.contact.api.NoojeeContactApi.Event;
 public class EndPointEvent
 {
 
-	private String extensionNo;
-	private Event event;
+	final private String extensionNo;
+	final private Event event;
 
 	public EndPointEvent(String extensionNo, Event event)
 	{
@@ -26,7 +26,7 @@ public class EndPointEvent
 	
 	public UniqueCallId getUniqueCallId()
 	{
-		return event.CallData.uniqueCallId;
+		return event.CallData.getUniqueCallId();
 	}
 	
 

@@ -87,7 +87,9 @@ public class GsonForNoojeeContact
 				.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
 				.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
 				.registerTypeAdapter(Money.class, new MoneySerializer())
-				.registerTypeAdapter(Money.class, new MoneyDeserializer());
+				.registerTypeAdapter(Money.class, new MoneyDeserializer())
+				.registerTypeAdapter(UniqueCallId.class, new UniqueCallIdSerializer())
+				.registerTypeAdapter(UniqueCallId.class, new UniqueCallIdDeserializer());
 
 		return builder.create();
 	}
@@ -162,17 +164,33 @@ public class GsonForNoojeeContact
 
 			DateTimeFormatter formatter;
 
-			if (value.length() == 16)
-				formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-			else
-				formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-			
-			if (value.length() > 19)
-				value = value.substring(0, 19);
+			switch (value.length())
+			{
+				case 16:
+					formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+					break;
+				case 21:
+					formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+					break;
+				case 19:
+					formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+					break;
+				default:
+					formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+					break;
+			}
+
+			// if (value.length() > 19)
+			// value = value.substring(0, 19);
 
 			value = value.replace("/", "-");
-			
-			LocalDateTime localDateTime = LocalDateTime.parse(value, formatter);
+			value = value.replaceAll("  ", "");
+			value = value.trim();
+
+			LocalDateTime localDateTime = null;
+
+			if (value.length() > 0)
+				localDateTime = LocalDateTime.parse(value, formatter);
 
 			// String date = json.getAsString();
 			// if (date.endsWith("Z"))
@@ -210,6 +228,34 @@ public class GsonForNoojeeContact
 			Money localDate = Conversions.toMoney(json.getAsBigDecimal());
 
 			return localDate;
+
+		}
+	}
+
+	/**
+	 * Money
+	 */
+	static private class UniqueCallIdSerializer implements JsonSerializer<UniqueCallId>
+	{
+
+		@Override
+		public JsonElement serialize(UniqueCallId uniqueCallId, Type typeOfSrc, JsonSerializationContext context)
+		{
+
+			return new JsonPrimitive(uniqueCallId.uniqueCallId);
+		}
+	}
+
+	static private class UniqueCallIdDeserializer implements JsonDeserializer<UniqueCallId>
+	{
+
+		@Override
+		public UniqueCallId deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+				throws JsonParseException
+		{
+			UniqueCallId uniqueCallId = new UniqueCallId(json.getAsString());
+
+			return uniqueCallId;
 
 		}
 	}

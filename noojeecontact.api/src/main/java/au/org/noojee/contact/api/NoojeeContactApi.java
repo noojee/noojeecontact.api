@@ -23,7 +23,7 @@ public class NoojeeContactApi
 
 	private String fqdn;
 	private String authToken;
-	
+
 	// used by subscribe to avoid missing events.
 	private long lastSequenceNo = 0;
 
@@ -81,10 +81,11 @@ public class NoojeeContactApi
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/hangup", authToken, query);
 
-		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
+		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
 		SimpleResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SimpleResponse.class);
 
+		logger.info("hangup for " + uniqueCallId + " result : " + hangupResponse.Code + " Message: " + hangupResponse.Message);
 		return hangupResponse;
 	}
 
@@ -179,29 +180,32 @@ public class NoojeeContactApi
 		return hangupResponse;
 	}
 
-	public SubscribeResponse subscribe(List<EndPoint> endPoints)
+	public SubscribeResponse subscribe(List<EndPoint> endPoints, int timeout)
 			throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String extensions = "";
-		
+
 		for (EndPoint endPoint : endPoints)
 		{
 			if (extensions.length() > 0)
 				extensions += ",";
 			extensions += endPoint.compactStringNoTech();
 		}
-		
+
 		String query = "exten=" + extensions
 				+ "&lastSequenceNumber=" + lastSequenceNo
-				+ "&timeOut=30";
+				+ "&timeOut=" + timeout;
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
-		SubscribeResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SubscribeResponse.class);
+		System.out.println(response.getResponseBody());
+
+		SubscribeResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(),
+				SubscribeResponse.class);
 
 		return hangupResponse;
 	}
@@ -238,8 +242,18 @@ public class NoojeeContactApi
 
 	class SimpleResponse
 	{
-		String Message;
-		int Code;
+		private String Message;
+		private int Code;
+		
+		boolean wasSuccessful()
+		{
+			return Code == 0;
+		}
+		
+		public String getMessage()
+		{
+			return Message;
+		}
 	}
 
 	class DialResponse
@@ -273,55 +287,119 @@ public class NoojeeContactApi
 			return code;
 		}
 	}
-	
+
 	public class CallData
 	{
-		boolean canAnswer;
-		String callerId;
-		UniqueCallId uniqueCallId;
-		LocalDateTime callStartTime;
-		boolean isQueueCall;
-		boolean isClickToDialCall;
-		boolean inbound;
-		EndPointStatus status;
-		
+		private boolean canAnswer;
+		private String callerId;
+		private UniqueCallId uniqueCallId;
+		private LocalDateTime callStartTime;
+		private boolean isQueueCall;
+		private boolean isClickToDialCall;
+		private boolean inbound;
+		private EndPointStatus status;
+
 		public EndPointStatus getStatus()
 		{
 			return status;
 		}
-		
+
+		public UniqueCallId getUniqueCallId()
+		{
+			return uniqueCallId;
+		}
+
+		/**
+		 * @return the canAnswer
+		 */
+		public boolean isCanAnswer()
+		{
+			return canAnswer;
+		}
+
+		/**
+		 * @return the callerId
+		 */
+		public String getCallerId()
+		{
+			return callerId;
+		}
+
+		/**
+		 * @return the callStartTime
+		 */
+		public LocalDateTime getCallStartTime()
+		{
+			return callStartTime;
+		}
+
+		/**
+		 * @return the isQueueCall
+		 */
+		public boolean isQueueCall()
+		{
+			return isQueueCall;
+		}
+
+		/**
+		 * @return the isClickToDialCall
+		 */
+		public boolean isClickToDialCall()
+		{
+			return isClickToDialCall;
+		}
+
+		/**
+		 * @return the inbound
+		 */
+		public boolean isInbound()
+		{
+			return inbound;
+		}
+
+
 	}
-	
+
 	public class Event
 	{
 		CallData CallData;
 		int CallID;
 		int Code;
+
 		public EndPointStatus getStatus()
 		{
 			return CallData.getStatus();
 		}
 	}
-	
+
 	public class SubscribeResponse
 	{
+		// {"Data":{"115":[{"CallData":{"callerId":"106","uniqueCallId":"1543022361.57","callStartTime":"","isQueueCall":false,"isClickToDialCall":false,"inbound":false,"status":"Dialing
+		// Out","otherPartyCallerId":"106","connectedCallerIdNum":"","outboundDestination":"106"},"CallID":27,"Code":0}]},"seq":114,"Code":0}
+
 		@SerializedName("Data")
-		HashMap<String, Event> events;
-		
+		HashMap<String, List<Event>> endPointEventMap;
+
 		int seq;
 		int Code;
+
 		public List<EndPointEvent> getEvents()
 		{
-			List<EndPointEvent> endPointEvents = new ArrayList<>();
-			
-			for (String extensionNo : events.keySet())
+			List<EndPointEvent> allEvents = new ArrayList<>();
+
+			for (String extensionNo : endPointEventMap.keySet())
 			{
-				EndPointEvent endPointEvent = new EndPointEvent(extensionNo, events.get(extensionNo));
-				endPointEvents.add(endPointEvent);
+				List<Event> endPointEvents = endPointEventMap.get(extensionNo);
+
+				for (Event event : endPointEvents)
+				{
+					EndPointEvent endPointEvent = new EndPointEvent(extensionNo, event);
+					allEvents.add(endPointEvent);
+				}
 			}
-			
-			return endPointEvents;
-			
+
+			return allEvents;
+
 		}
 	}
 

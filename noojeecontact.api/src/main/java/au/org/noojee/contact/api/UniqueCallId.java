@@ -1,15 +1,33 @@
 package au.org.noojee.contact.api;
 
+import java.io.IOException;
+
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
 public class UniqueCallId
 {
 	String uniqueCallId;
-	
+
 	public UniqueCallId(String uniqueCallId)
 	{
 		this.uniqueCallId = uniqueCallId;
 	}
 
-	/* (non-Javadoc)
+	// for gson.
+	public UniqueCallId()
+	{
+	}
+
+	
+	@Override
+	public String toString()
+	{
+		return uniqueCallId;
+	}
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -21,7 +39,8 @@ public class UniqueCallId
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -43,4 +62,6 @@ public class UniqueCallId
 			return false;
 		return true;
 	}
+
+	
 }
