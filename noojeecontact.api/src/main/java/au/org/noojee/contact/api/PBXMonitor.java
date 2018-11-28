@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
 
 /**
@@ -52,12 +53,12 @@ public enum PBXMonitor
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	synchronized public void start(NoojeeContactApi api) throws NoojeeContactApiException
+	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
 	{
-		this.api = api;
+		this.api = new NoojeeContactApi(fqdn, apiToken);
 
 		if (running.get() == true)
-			throw new IllegalStateException("The ActivityMonitor is already running.");
+			throw new IllegalStateException("The PBXMonitor is already running.");
 
 		subscribeLoop();
 
@@ -121,7 +122,7 @@ public enum PBXMonitor
 		try
 		{
 			// subscribe to the list of end points.
-			SubscribeResponse response = api.subscribe(endPoints.stream().collect(Collectors.toList()), 5);
+			SubscribeResponse response = api.subscribe(endPoints.stream().collect(Collectors.toList()), 30);
 
 			List<EndPointEvent> events = response.getEvents();
 
@@ -163,8 +164,9 @@ public enum PBXMonitor
 			if (!myfuture.isCancelled())
 			{
 				logger.error("Resubscribing at end of subscribeLoop: " + Thread.currentThread().getId());
+				subscribeLoop();
 			}
-			subscribeLoop();
+			
 		}
 
 		return null;
@@ -194,7 +196,7 @@ public enum PBXMonitor
 	synchronized  public void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
-			throw new IllegalStateException("The Montior is not running. Call ActivityMonitor.start()");
+			throw new IllegalStateException("The Montior is not running. Call " + this.name() + ".start()");
 
 		boolean foundNewOne = false;
 		for (EndPoint endPoint : endPoints)
@@ -365,5 +367,10 @@ public enum PBXMonitor
 			logger.error(e, e);
 
 		}
+	}
+
+	public SimpleResponse hangup(UniqueCallId uniqueCallId) throws NoojeeContactApiException
+	{
+		return api.hangup(uniqueCallId);
 	}
 }

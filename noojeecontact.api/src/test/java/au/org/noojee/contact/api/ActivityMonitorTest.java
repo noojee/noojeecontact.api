@@ -24,11 +24,10 @@ class ActivityMonitorTest
 	{
 		PBXMonitor monitor = PBXMonitor.SELF;
 
-		NoojeeContactApi api = new NoojeeContactApi("pentest.clouddialer.com.au",
-				"1981a2cc-db08-11e8-a033-0016ec037d28");
 		try
 		{
-			monitor.start(api);
+			monitor.start("pentest.clouddialer.com.au",
+					"1981a2cc-db08-11e8-a033-0016ec037d28");
 
 			seenHangup = false;
 
@@ -64,7 +63,7 @@ class ActivityMonitorTest
 			// wait 10 seconds and hangup the call.
 			Thread.sleep(10000);
 
-			SimpleResponse hangupResponse = api.hangup(uniqueCallIdToMonitor);
+			SimpleResponse hangupResponse = monitor.hangup(uniqueCallIdToMonitor);
 			if (hangupResponse.wasSuccessful())
 				print("Hangup call was successful");
 			else

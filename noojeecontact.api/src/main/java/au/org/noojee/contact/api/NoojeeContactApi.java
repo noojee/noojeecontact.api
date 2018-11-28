@@ -215,8 +215,6 @@ public class NoojeeContactApi
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
-		// System.out.println(response.getResponseBody());
-
 		SubscribeResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(),
 				SubscribeResponse.class);
 
