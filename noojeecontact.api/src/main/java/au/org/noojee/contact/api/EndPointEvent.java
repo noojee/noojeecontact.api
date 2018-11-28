@@ -30,6 +30,20 @@ public class EndPointEvent
 	}
 	
 
+	public PhoneNumber getCallerId()
+	{
+		return event.getCallerId();
+	}
+
+	
+	public boolean isInbound()
+	{
+		return event.CallData.isInbound();
+	}
+
+
+	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
@@ -73,7 +87,7 @@ public class EndPointEvent
 		return true;
 	}
 
-	
+		
 	
 
 }
