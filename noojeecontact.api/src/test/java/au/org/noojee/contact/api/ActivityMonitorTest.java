@@ -4,9 +4,8 @@ import static org.junit.Assert.fail;
 
 import java.util.concurrent.CountDownLatch;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import au.org.noojee.contact.api.NoojeeContactApi.DialResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 
 class ActivityMonitorTest
