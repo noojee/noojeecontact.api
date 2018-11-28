@@ -23,7 +23,7 @@ import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
  * 
  * @author bsutton
  */
-public enum PBXMonitor
+public enum PBXMonitor2
 {
 	SELF;
 
@@ -65,7 +65,7 @@ public enum PBXMonitor
 		running.set(true);
 	}
 
-	synchronized  public void stop()
+	synchronized public void stop()
 	{
 		// checkStart();
 
@@ -92,113 +92,13 @@ public enum PBXMonitor
 
 	}
 
-	private void subscribeLoop()
-	{
-		try
-		{
-			// lock threads out until doSubscribe has a chance to get a copy
-			// of 'future'.
-			// logger.error("Acquiring semaphore id:" + Thread.currentThread().getId());
-
-			semaphore.acquire();
-			// logger.error("Acquired semaphore id:" + Thread.currentThread().getId());
-			future = subscriptionLoopPool.submit(() -> doSubscribe());
-		}
-		catch (InterruptedException e)
-		{
-		}
-	}
-
-	private Void doSubscribe()
-	{
-
-		List<EndPoint> endPoints = getCopyOfAllEndPoints();
-
-		// we have our own copy of future so we can let other threads in now.
-		Future<Void> myfuture = future;
-		semaphore.release();
-		// logger.error("Released semaphore id:" + Thread.currentThread().getId());
-
-		try
-		{
-			// subscribe to the list of end points.
-			SubscribeResponse response = api.subscribe(endPoints.stream().collect(Collectors.toList()), 30);
-
-			List<EndPointEvent> events = response.getEvents();
-
-			for (EndPointEvent event : events)
-			{
-				EndPoint endPoint = event.getEndPoint();
-				switch (event.getStatus())
-				{
-					// we use a thread pool (of 1) to do the callbacks as the doSubscribe thread can be
-					// interrupted but we don't want end user code to be interrupted in unexpected manner.
-					// The thread pool isolates the user code from our problems when we get cancelled.
-					case Connected:
-						subscriberCallbackPool.execute(() -> notifyAnswer(endPoint, event));
-						break;
-					case DialingOut:
-						subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
-						break;
-					case Hungup:
-						subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
-						break;
-					case Ringing:
-						subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
-						break;
-					default:
-						System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
-						break;
-				}
-			}
-
-		}
-		catch (NoojeeContactApiException e)
-		{
-			logger.error(e, e);
-			notifyError(e);
-		}
-		finally
-		{
-			// If our future has been cancelled then we don't try to restart it.
-			if (!myfuture.isCancelled())
-			{
-				logger.error("Resubscribing at end of subscribeLoop: " + Thread.currentThread().getId());
-				subscribeLoop();
-			}
-			
-		}
-
-		return null;
-	}
-	
-	synchronized public void unsubscribe(Subscriber subscriber)
-	{
-		// unsubscribe from all end points.
-		
-		List<EndPoint> endPoints = subscriptions.keySet().stream().collect(Collectors.toList());
-		for (EndPoint endPoint : endPoints)
-		{
-			List<Subscriber> subscribers = subscriptions.get(endPoint);
-			
-			if (subscribers.contains(subscriber))
-				subscribers.remove(subscriber);
-			
-			if (subscribers.isEmpty())
-			{
-				// no more subscribers for this end point so remove the end point.
-				subscriptions.remove(endPoint);
-			}
-		}
-	}
-
-
-	synchronized  public void subscribe(Subscriber subscriber, EndPoint... endPoints)
+	synchronized public void subscribe(Subscriber subscriber, EndPoint... endPoints) throws NoojeeContactApiException
 	{
 		if (!running.get())
 			throw new IllegalStateException("The Montior is not running. Call " + this.name() + ".start()");
 
-		boolean foundNewOne = false;
+		List<EndPoint> oneOffSubscription = new ArrayList<>();
+		
 		for (EndPoint endPoint : endPoints)
 		{
 			if (subscriptions.containsKey(endPoint))
@@ -216,24 +116,98 @@ public enum PBXMonitor
 				List<Subscriber> subscribers = new ArrayList<>();
 				subscribers.add(subscriber);
 				subscriptions.put(endPoint, subscribers);
+				
+				oneOffSubscription.add(endPoint);
 
-				foundNewOne = true;
 
 			}
 			logger.error("Added subscription for: " + endPoint.extensionNo);
 		}
 
-		if (foundNewOne)
+		if (!oneOffSubscription.isEmpty())
 		{
-			// We need to replace the current subscribe loop as
-			// we now have a new subscription to support.
-			if (future != null)
-				future.cancel(true);
-			logger.error("Starting new subscribeLoop");
-			subscribeLoop();
+			// We found a new end point so we do a one off subscription.
+			// This allows the subscriber to get immediate subscriptions without 
+			// waiting for the next subscribeLoop (takes 30 seconds).
+			// On the next subscribe loop these new end points will be include
+			// hence we only need to do this once.
+			logger.error("Triggering one off subscription.");
+			_subscribe(oneOffSubscription);
 
 		}
 
+	}
+
+	synchronized public void unsubscribe(Subscriber subscriber)
+	{
+		// unsubscribe from all end points.
+		List<EndPoint> endPoints = subscriptions.keySet().stream().collect(Collectors.toList());
+		for (EndPoint endPoint : endPoints)
+		{
+			List<Subscriber> subscribers = subscriptions.get(endPoint);
+
+			if (subscribers.contains(subscriber))
+				subscribers.remove(subscriber);
+
+			if (subscribers.isEmpty())
+			{
+				// no more subscribers for this end point so remove the end point.
+				subscriptions.remove(endPoint);
+			}
+		}
+	}
+
+	private void subscribeLoop()
+	{
+		while (running.get())
+		{
+			List<EndPoint> endPoints = getCopyOfAllEndPoints();
+
+			try
+			{
+				// subscribe to the list of end points.
+				_subscribe(endPoints);
+
+			}
+			catch (NoojeeContactApiException e)
+			{
+				logger.error(e, e);
+				notifyError(e);
+			}
+		}
+	}
+
+	private void _subscribe(List<EndPoint> endPoints) throws NoojeeContactApiException
+	{
+		SubscribeResponse response = api.subscribe(endPoints.stream().collect(Collectors.toList()), 30);
+
+		List<EndPointEvent> events = response.getEvents();
+
+		for (EndPointEvent event : events)
+		{
+			EndPoint endPoint = event.getEndPoint();
+			switch (event.getStatus())
+			{
+				// we use a thread pool (of 1) to do the callbacks as the doSubscribe thread can be
+				// interrupted but we don't want end user code to be interrupted in unexpected manner.
+				// The thread pool isolates the user code from our problems when we get cancelled.
+				case Connected:
+					subscriberCallbackPool.execute(() -> notifyAnswer(endPoint, event));
+					break;
+				case DialingOut:
+					subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
+					break;
+				case Hungup:
+					subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
+					break;
+				case Ringing:
+					subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
+					break;
+				default:
+					System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
+					break;
+			}
+		}
 	}
 
 	private List<Subscriber> getCopyOfSubscribers(EndPoint endPoint)

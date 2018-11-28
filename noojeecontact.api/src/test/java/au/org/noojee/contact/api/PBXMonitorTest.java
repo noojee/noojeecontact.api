@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 
-class ActivityMonitorTest
+public class PBXMonitorTest
 {
 	EndPoint e100 = new EndPoint("100");
 	EndPoint e101 = new EndPoint("101");
@@ -18,17 +18,21 @@ class ActivityMonitorTest
 	private UniqueCallId uniqueCallIdToMonitor = null;
 
 	private boolean seenHangup;
+	
+	public PBXMonitorTest()
+	{
+		
+	}
 
 	@Test
-	void test() throws InterruptedException
+	public void test() throws InterruptedException
 	{
-		PBXMonitor monitor = PBXMonitor.SELF;
+		PBXMonitor2 monitor = PBXMonitor2.SELF;
 
-		NoojeeContactApi api = new NoojeeContactApi("pentest.clouddialer.com.au",
-				"1981a2cc-db08-11e8-a033-0016ec037d28");
 		try
 		{
-			monitor.start(api);
+			monitor.start("pentest.clouddialer.com.au",
+					"1981a2cc-db08-11e8-a033-0016ec037d28");
 
 			seenHangup = false;
 
@@ -64,7 +68,7 @@ class ActivityMonitorTest
 			// wait 10 seconds and hangup the call.
 			Thread.sleep(10000);
 
-			SimpleResponse hangupResponse = api.hangup(uniqueCallIdToMonitor);
+			SimpleResponse hangupResponse = monitor.hangup(uniqueCallIdToMonitor);
 			if (hangupResponse.wasSuccessful())
 				print("Hangup call was successful");
 			else
