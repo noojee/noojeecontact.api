@@ -1,7 +1,9 @@
 package au.org.noojee.contact.api;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,11 +59,21 @@ public class NoojeeContactApi
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
+		String encodedAutoAnswer = autoAnswer.getHeader();
+		try
+		{
+			encodedAutoAnswer = URLEncoder.encode(encodedAutoAnswer, "UTF-8");
+		}
+		catch (UnsupportedEncodingException e1)
+		{
+			// won't happen
+		}
+
 		String query = "number=" + phoneNumber.compactString()
 				+ "&extenOrUniqueId=" + endPoint.compactString()
 				+ "&callerId=" + clid.compactString()
 				+ "&phoneCaption=" + phoneCaption
-				+ "&autoAnswer=" + autoAnswer.getHeader();
+				+ "&autoAnswer=" + encodedAutoAnswer;
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
 
@@ -85,7 +97,8 @@ public class NoojeeContactApi
 
 		SimpleResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SimpleResponse.class);
 
-		logger.info("hangup for " + uniqueCallId + " result : " + hangupResponse.Code + " Message: " + hangupResponse.Message);
+		logger.info("hangup for " + uniqueCallId + " result : " + hangupResponse.Code + " Message: "
+				+ hangupResponse.Message);
 		return hangupResponse;
 	}
 
@@ -244,12 +257,12 @@ public class NoojeeContactApi
 	{
 		private String Message;
 		private int Code;
-		
+
 		boolean wasSuccessful()
 		{
 			return Code == 0;
 		}
-		
+
 		public String getMessage()
 		{
 			return Message;
@@ -357,7 +370,6 @@ public class NoojeeContactApi
 			return inbound;
 		}
 
-
 	}
 
 	public class Event
@@ -369,6 +381,11 @@ public class NoojeeContactApi
 		public EndPointStatus getStatus()
 		{
 			return CallData.getStatus();
+		}
+
+		PhoneNumber getCallerId()
+		{
+			return new PhoneNumber(CallData.callerId);
 		}
 	}
 
