@@ -1,11 +1,7 @@
 package au.org.noojee.contact.api;
 
-import java.util.List;
-
 public abstract class SubscriberAdapter implements Subscriber
 {
-
-	
 
 	@Override
 	public void dialing(EndPoint endPoint, EndPointEvent event)

@@ -22,7 +22,7 @@ import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
  * 
  * @author bsutton
  */
-public enum ActivityMonitor
+public enum PBXMonitor
 {
 	SELF;
 
@@ -52,7 +52,7 @@ public enum ActivityMonitor
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	synchronized void start(NoojeeContactApi api) throws NoojeeContactApiException
+	synchronized public void start(NoojeeContactApi api) throws NoojeeContactApiException
 	{
 		this.api = api;
 
@@ -64,7 +64,7 @@ public enum ActivityMonitor
 		running.set(true);
 	}
 
-	synchronized void stop()
+	synchronized  public void stop()
 	{
 		// checkStart();
 
@@ -169,8 +169,29 @@ public enum ActivityMonitor
 
 		return null;
 	}
+	
+	synchronized public void unsubscribe(Subscriber subscriber)
+	{
+		// unsubscribe from all end points.
+		
+		List<EndPoint> endPoints = subscriptions.keySet().stream().collect(Collectors.toList());
+		for (EndPoint endPoint : endPoints)
+		{
+			List<Subscriber> subscribers = subscriptions.get(endPoint);
+			
+			if (subscribers.contains(subscriber))
+				subscribers.remove(subscriber);
+			
+			if (subscribers.isEmpty())
+			{
+				// no more subscribers for this end point so remove the end point.
+				subscriptions.remove(endPoint);
+			}
+		}
+	}
 
-	synchronized void subscribe(Subscriber subscriber, EndPoint... endPoints)
+
+	synchronized  public void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
 			throw new IllegalStateException("The Montior is not running. Call ActivityMonitor.start()");
@@ -345,5 +366,6 @@ public enum ActivityMonitor
 
 		}
 	}
+
 
 }

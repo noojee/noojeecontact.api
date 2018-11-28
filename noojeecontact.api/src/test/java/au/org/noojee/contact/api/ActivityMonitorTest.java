@@ -22,7 +22,7 @@ class ActivityMonitorTest
 	@Test
 	void test() throws InterruptedException
 	{
-		ActivityMonitor monitor = ActivityMonitor.SELF;
+		PBXMonitor monitor = PBXMonitor.SELF;
 
 		NoojeeContactApi api = new NoojeeContactApi("pentest.clouddialer.com.au",
 				"1981a2cc-db08-11e8-a033-0016ec037d28");
