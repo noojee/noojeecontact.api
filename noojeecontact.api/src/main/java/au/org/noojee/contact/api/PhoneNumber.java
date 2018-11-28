@@ -8,11 +8,12 @@ public class PhoneNumber
 	public PhoneNumber(String phoneNumber)
 	{
 		this.phoneNumber = phoneNumber;
+		
 	}
 
 	public String compactString()
 	{
-		return this.phoneNumber;
+		return this.phoneNumber .trim().replaceAll(" ", "");
 	}
 
 	/* (non-Javadoc)
