@@ -6,6 +6,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 
+import au.org.noojee.contact.api.NoojeeContactApi.DialResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 
 public class PBXMonitorTest
@@ -18,10 +19,10 @@ public class PBXMonitorTest
 	private UniqueCallId uniqueCallIdToMonitor = null;
 
 	private boolean seenHangup;
-	
+
 	public PBXMonitorTest()
 	{
-		
+
 	}
 
 	@Test
@@ -40,29 +41,25 @@ public class PBXMonitorTest
 
 			monitor.subscribe(monitor(answerLatch), e115);
 
-			// print("dialing");
-			// DialResponse response = api.dial(new PhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
-			// new PhoneNumber("0383208100"), true, "A Test Call");
-			//
-			// print("Dial sent, now waiting");
-			//
-			// Thread.sleep(20000);
-			//
-			// monitor.subscribe(e115, new SubscriberAdapter()
-			// {
-			// });
-			// monitor.subscribe(e115, new SubscriberAdapter()
-			// {
-			// });
-			// monitor.subscribe(e101, new SubscriberAdapter()
-			// {
-			// });
-			// monitor.subscribe(e100, new SubscriberAdapter()
-			// {
-			// });
+			monitor.subscribe(e115, new SubscriberAdapter()
+			{
+			});
+			monitor.subscribe(e101, new SubscriberAdapter()
+			{
+			});
+			monitor.subscribe(e100, new SubscriberAdapter()
+			{
+			});
+			
+			print("dialing");
+			DialResponse response = monitor.dial(new PhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
+					new PhoneNumber("0383208100"), true, "A Test Call");
+
+			print("Dial sent, now waiting");
+
 
 			answerLatch.await();
-			
+
 			print("Call answered");
 
 			// wait 10 seconds and hangup the call.
@@ -95,13 +92,13 @@ public class PBXMonitorTest
 		{
 
 			@Override
-			public void hungup(EndPoint endPoint, EndPointEvent event)
+			public void hungup(EndPointEvent event)
 			{
 				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
 				{
 					if (!seenHangup)
 						print("Call was hungup: " + event.getUniqueCallId() + " for EndPoint: "
-								+ endPoint.extensionNo);
+								+ event.getEndPoint().extensionNo);
 					seenHangup = true;
 					// monitor.stop();
 				}
@@ -110,19 +107,19 @@ public class PBXMonitorTest
 			}
 
 			@Override
-			public void dialing(EndPoint endPoint, EndPointEvent event)
+			public void dialing(EndPointEvent event)
 			{
-				print("Dialing: " + endPoint.extensionNo + " on " + event.getUniqueCallId());
+				print("Recieved Dial Event: " + event.getEndPoint().extensionNo + " on " + event.getUniqueCallId());
 
 				uniqueCallIdToMonitor = event.getUniqueCallId();
 			}
 
 			@Override
-			public void answered(EndPoint endPoint, EndPointEvent event)
+			public void answered(EndPointEvent event)
 			{
 				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
 				{
-					print("Answered endPoint: " + endPoint.extensionNo + " uniqueCallId:"
+					print("Answered endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
 							+ event.getUniqueCallId());
 
 					answerLatch.countDown();
@@ -130,13 +127,13 @@ public class PBXMonitorTest
 			}
 
 			@Override
-			public void ringing(EndPoint endPoint, EndPointEvent event)
+			public void ringing(EndPointEvent event)
 			{
-				if (endPoint.extensionNo.equals("115"))
+				if (event.getEndPoint().extensionNo.equals("115"))
 				{
 					uniqueCallIdToMonitor = event.getUniqueCallId();
 
-					print("Ringing endPoint: " + endPoint.extensionNo + " uniqueCallId:"
+					print("Ringing endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
 							+ event.getUniqueCallId());
 				}
 			}

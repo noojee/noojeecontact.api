@@ -65,7 +65,7 @@ public enum PBXMonitor
 		running.set(true);
 	}
 
-	synchronized  public void stop()
+	synchronized public void stop()
 	{
 		// checkStart();
 
@@ -135,16 +135,16 @@ public enum PBXMonitor
 					// interrupted but we don't want end user code to be interrupted in unexpected manner.
 					// The thread pool isolates the user code from our problems when we get cancelled.
 					case Connected:
-						subscriberCallbackPool.execute(() -> notifyAnswer(endPoint, event));
+						subscriberCallbackPool.execute(() -> notifyAnswer(event));
 						break;
 					case DialingOut:
-						subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
+						subscriberCallbackPool.execute(() -> notifyDialing(event));
 						break;
 					case Hungup:
-						subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
+						subscriberCallbackPool.execute(() -> notifyHangup(event));
 						break;
 					case Ringing:
-						subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
+						subscriberCallbackPool.execute(() -> notifyRinging(event));
 						break;
 					default:
 						System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
@@ -166,24 +166,24 @@ public enum PBXMonitor
 				logger.error("Resubscribing at end of subscribeLoop: " + Thread.currentThread().getId());
 				subscribeLoop();
 			}
-			
+
 		}
 
 		return null;
 	}
-	
+
 	synchronized public void unsubscribe(Subscriber subscriber)
 	{
 		// unsubscribe from all end points.
-		
+
 		List<EndPoint> endPoints = subscriptions.keySet().stream().collect(Collectors.toList());
 		for (EndPoint endPoint : endPoints)
 		{
 			List<Subscriber> subscribers = subscriptions.get(endPoint);
-			
+
 			if (subscribers.contains(subscriber))
 				subscribers.remove(subscriber);
-			
+
 			if (subscribers.isEmpty())
 			{
 				// no more subscribers for this end point so remove the end point.
@@ -192,8 +192,7 @@ public enum PBXMonitor
 		}
 	}
 
-
-	synchronized  public void subscribe(Subscriber subscriber, EndPoint... endPoints)
+	synchronized public void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
 			throw new IllegalStateException("The Montior is not running. Call " + this.name() + ".start()");
@@ -296,15 +295,15 @@ public enum PBXMonitor
 
 	}
 
-	private void notifyHangup(EndPoint endPoint, EndPointEvent event)
+	private void notifyHangup(EndPointEvent event)
 	{
 		try
 		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+			List<Subscriber> subscribers = getCopyOfSubscribers(event.getEndPoint());
 
 			subscribers.forEach(subscriber ->
 				{
-					subscriber.hungup(endPoint, event);
+					subscriber.hungup(event);
 				});
 		}
 		catch (Throwable e)
@@ -315,15 +314,15 @@ public enum PBXMonitor
 
 	}
 
-	private void notifyDialing(EndPoint endPoint, EndPointEvent event)
+	private void notifyDialing(EndPointEvent event)
 	{
 		try
 		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+			List<Subscriber> subscribers = getCopyOfSubscribers(event.getEndPoint());
 
 			subscribers.forEach(subscriber ->
 				{
-					subscriber.dialing(endPoint, event);
+					subscriber.dialing(event);
 				});
 		}
 		catch (Throwable e)
@@ -334,15 +333,15 @@ public enum PBXMonitor
 
 	}
 
-	private void notifyRinging(EndPoint endPoint, EndPointEvent event)
+	private void notifyRinging(EndPointEvent event)
 	{
 		try
 		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+			List<Subscriber> subscribers = getCopyOfSubscribers(event.getEndPoint());
 
 			subscribers.forEach(subscriber ->
 				{
-					subscriber.ringing(endPoint, event);
+					subscriber.ringing(event);
 				});
 		}
 		catch (Throwable e)
@@ -351,15 +350,15 @@ public enum PBXMonitor
 		}
 	}
 
-	private void notifyAnswer(EndPoint endPoint, EndPointEvent event)
+	private void notifyAnswer(EndPointEvent event)
 	{
 		try
 		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+			List<Subscriber> subscribers = getCopyOfSubscribers(event.getEndPoint());
 
 			subscribers.forEach(subscriber ->
 				{
-					subscriber.answered(endPoint, event);
+					subscriber.answered(event);
 				});
 		}
 		catch (Throwable e)
