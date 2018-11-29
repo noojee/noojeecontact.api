@@ -64,5 +64,11 @@ public class EndPoint
 		return true;
 	}
 	
+	@Override
+	public String toString()
+	{
+		return compactString();
+	}
+	
 
 }

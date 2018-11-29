@@ -28,7 +28,7 @@ public class PBXMonitorTest
 	@Test
 	public void test() throws InterruptedException
 	{
-		PBXMonitor2 monitor = PBXMonitor2.SELF;
+		PBXMonitor monitor = PBXMonitor.SELF;
 
 		try
 		{
@@ -117,6 +117,8 @@ public class PBXMonitorTest
 			@Override
 			public void answered(EndPointEvent event)
 			{
+				print("Saw Answer endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
+						+ event.getUniqueCallId());
 				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
 				{
 					print("Answered endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"

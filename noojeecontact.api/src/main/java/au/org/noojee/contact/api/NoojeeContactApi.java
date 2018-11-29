@@ -26,9 +26,6 @@ public class NoojeeContactApi
 	private String fqdn;
 	private String authToken;
 
-	// used by subscribe to avoid missing events.
-	private long lastSequenceNo = 0;
-
 	public NoojeeContactApi(String fqdn, String authToken)
 	{
 		this.fqdn = fqdn;
@@ -193,7 +190,7 @@ public class NoojeeContactApi
 		return hangupResponse;
 	}
 
-	public SubscribeResponse subscribe(List<EndPoint> endPoints, int timeout)
+	public SubscribeResponse subscribe(List<EndPoint> endPoints, long sequenceNo, int timeout)
 			throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
@@ -208,7 +205,7 @@ public class NoojeeContactApi
 		}
 
 		String query = "exten=" + extensions
-				+ "&lastSequenceNumber=" + lastSequenceNo
+				+ "&lastSequenceNumber=" + sequenceNo
 				+ "&timeOut=" + timeout;
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
