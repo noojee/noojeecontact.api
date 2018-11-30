@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -42,13 +40,14 @@ public enum PBXMonitor
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 
-	private Future<Void> future;
-
 	private ExecutorService subscriptionLoopPool = Executors.newFixedThreadPool(10);
 
 	private ExecutorService subscriberCallbackPool = Executors.newFixedThreadPool(1);
 
-	private Semaphore semaphore = new Semaphore(1);
+	PBXMonitor()
+	{
+		logger.error("Starting PBX Monitor");
+	}
 
 	/**
 	 * Start the activity monitor. You will normally start the activity monitor as soon as your application starts and
@@ -72,23 +71,9 @@ public enum PBXMonitor
 
 	synchronized public void stop()
 	{
-		// checkStart();
-
-		try
-		{
-			logger.error("stop called.");
-			semaphore.acquire();
-			running.set(false);
-			future.cancel(true);
-			semaphore.release();
-
-			api = null;
-
-		}
-		catch (InterruptedException e)
-		{
-			logger.error(e, e);
-		}
+		logger.error("Stopping PBXMonitor.");
+		running.set(false);
+		api = null;
 	}
 
 	private void checkStart()
@@ -201,7 +186,7 @@ public enum PBXMonitor
 			// subscribe to the list of end points.
 			_subscribe(endPoints);
 
-			//logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
+			// logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
 
 		}
 
@@ -217,7 +202,7 @@ public enum PBXMonitor
 			// subscribe to the list of end points.
 			_subscribe(endPoints);
 
-			//logger.error("Looping on Thread " + Thread.currentThread().getId());
+			// logger.error("Looping on Thread " + Thread.currentThread().getId());
 
 		}
 
@@ -228,17 +213,17 @@ public enum PBXMonitor
 	{
 		try
 		{
-//			logger.error("http subscribe request sent for "
-//					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
-//					+ Thread.currentThread().getId());
+			// logger.error("http subscribe request sent for "
+			// + endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+			// + Thread.currentThread().getId());
 
 			SubscribeResponse response = api.subscribe(
 					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo++,
 					30);
 
-//			logger.error("http subscribe response recieved for "
-//					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
-//					+ Thread.currentThread().getId());
+			// logger.error("http subscribe response recieved for "
+			// + endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+			// + Thread.currentThread().getId());
 
 			List<EndPointEvent> events = response.getEvents();
 
