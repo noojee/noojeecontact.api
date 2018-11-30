@@ -411,7 +411,7 @@ public class NoojeeContactApi
 		@SerializedName("Data")
 		HashMap<String, List<Event>> endPointEventMap;
 
-		int seq;
+		long seq;
 		int Code;
 
 		public List<EndPointEvent> getEvents()
