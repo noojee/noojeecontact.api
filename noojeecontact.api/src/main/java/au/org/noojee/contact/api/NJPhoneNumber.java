@@ -1,11 +1,11 @@
 package au.org.noojee.contact.api;
 
-public class PhoneNumber
+public class NJPhoneNumber
 {
 
 	String phoneNumber;
 	
-	public PhoneNumber(String phoneNumber)
+	public NJPhoneNumber(String phoneNumber)
 	{
 		this.phoneNumber = phoneNumber;
 		
@@ -40,7 +40,7 @@ public class PhoneNumber
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PhoneNumber other = (PhoneNumber) obj;
+		NJPhoneNumber other = (NJPhoneNumber) obj;
 		if (phoneNumber == null)
 		{
 			if (other.phoneNumber != null)

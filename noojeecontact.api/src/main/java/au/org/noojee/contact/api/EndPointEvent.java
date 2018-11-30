@@ -30,7 +30,7 @@ public class EndPointEvent
 	}
 	
 
-	public PhoneNumber getCallerId()
+	public NJPhoneNumber getCallerId()
 	{
 		return event.getCallerId();
 	}
@@ -41,8 +41,19 @@ public class EndPointEvent
 		return event.CallData.isInbound();
 	}
 
+	
+	
 
 	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return "EndPointEvent [extensionNo=" + extensionNo + ", event=" + event + "]";
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()

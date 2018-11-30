@@ -1,5 +1,8 @@
 package au.org.noojee.contact.api;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 public enum AutoAnswer
 {
 
@@ -21,6 +24,22 @@ public enum AutoAnswer
 	String getHeader()
 	{
 		return this.header;
+	}
+
+	public String getEncodedHeader()
+	{
+		String encodedHeader = header;
+		try
+		{
+			encodedHeader =  URLEncoder.encode(this.header, "UTF-8");
+		}
+		catch (UnsupportedEncodingException e1)
+		{
+			// won't happen
+		}
+		
+		return encodedHeader;
+
 	}
 	
 

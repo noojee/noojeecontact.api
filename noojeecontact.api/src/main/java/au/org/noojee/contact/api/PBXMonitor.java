@@ -76,6 +76,7 @@ public enum PBXMonitor
 
 		try
 		{
+			logger.error("stop called.");
 			semaphore.acquire();
 			running.set(false);
 			future.cancel(true);
@@ -97,12 +98,12 @@ public enum PBXMonitor
 
 	}
 
-	synchronized public void subscribe(EndPoint endPoint, Subscriber subscriber) 
+	synchronized public void subscribe(EndPoint endPoint, Subscriber subscriber)
 	{
 		subscribe(subscriber, endPoint);
 	}
 
-	synchronized public void subscribe(Subscriber subscriber, EndPoint... endPoints) 
+	synchronized public void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
 			throw new IllegalStateException("The Montior is not running. Call " + this.name() + ".start()");
@@ -111,7 +112,7 @@ public enum PBXMonitor
 
 		for (EndPoint endPoint : endPoints)
 		{
-			
+
 			EndPointWrapper wrapper = new EndPointWrapper(endPoint);
 			if (subscriptions.containsKey(wrapper))
 			{
@@ -190,36 +191,33 @@ public enum PBXMonitor
 					break;
 				}
 			}
-			
+
 			if (!required)
 			{
 				logger.error("ShortSubscribeLoop no longer required on Thread " + Thread.currentThread().getId());
 				break;
 			}
-			
+
 			// subscribe to the list of end points.
 			_subscribe(endPoints);
 
-			logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
+			//logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
 
 		}
 
 		return null;
 	}
 
-
 	private Void mainSubscribeLoop()
 	{
 		while (running.get())
 		{
 			List<EndPointWrapper> endPoints = getCopyAndMarkAllEndPoints();
-			
-			
 
 			// subscribe to the list of end points.
 			_subscribe(endPoints);
 
-			logger.error("Looping on Thread " + Thread.currentThread().getId());
+			//logger.error("Looping on Thread " + Thread.currentThread().getId());
 
 		}
 
@@ -230,21 +228,23 @@ public enum PBXMonitor
 	{
 		try
 		{
-			logger.error("http subscribe request sent for "
-					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
-					+ Thread.currentThread().getId());
+//			logger.error("http subscribe request sent for "
+//					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+//					+ Thread.currentThread().getId());
 
-			SubscribeResponse response = api.subscribe(endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo++,
+			SubscribeResponse response = api.subscribe(
+					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo++,
 					30);
 
-			logger.error("http subscribe response recieved for "
-					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
-					+ Thread.currentThread().getId());
+//			logger.error("http subscribe response recieved for "
+//					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+//					+ Thread.currentThread().getId());
 
 			List<EndPointEvent> events = response.getEvents();
 
 			for (EndPointEvent event : events)
 			{
+				// logger.error("Event: " + event);
 				EndPoint endPoint = event.getEndPoint();
 				switch (event.getStatus())
 				{
@@ -252,7 +252,7 @@ public enum PBXMonitor
 					// interrupted but we don't want end user code to be interrupted in unexpected manner.
 					// The thread pool isolates the user code from our problems when we get cancelled.
 					case Connected:
-						subscriberCallbackPool.execute(() -> notifyAnswer(endPoint, event));
+						subscriberCallbackPool.execute(() -> notifiyConnected(endPoint, event));
 						break;
 					case DialingOut:
 						subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
@@ -273,6 +273,17 @@ public enum PBXMonitor
 		{
 			logger.error(e, e);
 			notifyError(e);
+
+			try
+			{
+				// Likely a network error so sleep a bit and hope it recovers.
+				Thread.sleep(5000);
+			}
+			catch (InterruptedException e1)
+			{
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 
 		return null;
@@ -292,8 +303,6 @@ public enum PBXMonitor
 
 	}
 
-	
-	
 	/*
 	 * Get all of the end points that we have subscriptions on.
 	 */
@@ -310,15 +319,13 @@ public enum PBXMonitor
 			{
 				wrapper.servicedByMainLoop = true;
 			}
-			
+
 			endPoints.addAll(subscribed);
 		}
 		return endPoints;
 
 	}
 
-	
-	
 	private List<Subscriber> getCopyOfAllSubscribers()
 	{
 
@@ -337,94 +344,102 @@ public enum PBXMonitor
 
 	private void notifyError(NoojeeContactApiException e)
 	{
-		try
-		{
-			List<Subscriber> subscribers = getCopyOfAllSubscribers();
 
-			subscribers.forEach(subscriber -> subscriber.onError(e));
-		}
-		catch (Throwable e2)
-		{
-			logger.error(e, e2);
+		List<Subscriber> subscribers = getCopyOfAllSubscribers();
 
-		}
+		subscribers.forEach(subscriber ->
+			{
+				try
+				{
+					subscriber.onError(e);
+				}
+				catch (Throwable e2)
+				{
+					logger.error(e, e2);
+				}
+			});
 
 	}
 
 	private void notifyHangup(EndPoint endPoint, EndPointEvent event)
 	{
-		try
-		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-			subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber ->
+			{
+				try
 				{
 					subscriber.hungup(event);
-				});
-		}
-		catch (Throwable e)
-		{
-			logger.error(e, e);
+				}
+				catch (Throwable e)
+				{
+					logger.error(e, e);
 
-		}
+				}
+
+			});
 
 	}
 
 	private void notifyDialing(EndPoint endPoint, EndPointEvent event)
 	{
-		try
-		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-			subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber ->
+			{
+				try
 				{
-					subscriber.dialing(event);
-				});
-		}
-		catch (Throwable e)
-		{
-			logger.error(e, e);
 
-		}
+					subscriber.dialing(event);
+				}
+				catch (Throwable e)
+				{
+					logger.error(e, e);
+
+				}
+
+			});
 
 	}
 
 	private void notifyRinging(EndPoint endPoint, EndPointEvent event)
 	{
-		try
-		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-			subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber ->
+			{
+				try
 				{
+
 					subscriber.ringing(event);
-				});
-		}
-		catch (Throwable e)
-		{
-			logger.error(e, e);
-		}
-	}
-
-	private void notifyAnswer(EndPoint endPoint, EndPointEvent event)
-	{
-		try
-		{
-			List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
-
-			subscribers.forEach(subscriber ->
+				}
+				catch (Throwable e)
 				{
-					subscriber.answered(event);
-				});
-		}
-		catch (Throwable e)
-		{
-			logger.error(e, e);
+					logger.error(e, e);
+				}
+			});
 
-		}
 	}
-	
-	
+
+	private void notifiyConnected(EndPoint endPoint, EndPointEvent event)
+	{
+		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
+
+		subscribers.forEach(subscriber ->
+			{
+				try
+				{
+					subscriber.connected(event);
+				}
+				catch (Throwable e)
+				{
+					logger.error(e, e);
+
+				}
+			});
+
+	}
+
 	private static class EndPointWrapper
 	{
 		EndPoint endPoint;
@@ -446,7 +461,8 @@ public enum PBXMonitor
 			return this.endPoint.extensionNo;
 		}
 
-		/* (non-Javadoc)
+		/*
+		 * (non-Javadoc)
 		 * @see java.lang.Object#hashCode()
 		 */
 		@Override
@@ -458,7 +474,8 @@ public enum PBXMonitor
 			return result;
 		}
 
-		/* (non-Javadoc)
+		/*
+		 * (non-Javadoc)
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override
@@ -481,13 +498,7 @@ public enum PBXMonitor
 			return true;
 		}
 
-	
-
-		
-		
-		
 	}
-
 
 	/**
 	 * convenience methods as the Monitor wraps the api.
@@ -501,10 +512,9 @@ public enum PBXMonitor
 		return api.hangup(uniqueCallId);
 	}
 
-	public DialResponse dial(PhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
-			PhoneNumber clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
+	public DialResponse dial(NJPhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
+			NJPhoneNumber clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
 	{
 		return api.dial(phoneNumber, endPoint, phoneCaption, autoAnswer, clid, recordCall, tagCall);
 	}
 }
-

@@ -6,7 +6,7 @@ public interface Subscriber
 
 	void ringing(EndPointEvent event);
 
-	void answered(EndPointEvent event);
+	void connected(EndPointEvent event);
 
 	void hungup(EndPointEvent event);
 

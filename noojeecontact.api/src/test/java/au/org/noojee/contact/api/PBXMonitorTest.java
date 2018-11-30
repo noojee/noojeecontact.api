@@ -52,15 +52,15 @@ public class PBXMonitorTest
 			});
 			
 			print("dialing");
-			DialResponse response = monitor.dial(new PhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
-					new PhoneNumber("0383208100"), true, "A Test Call");
+			DialResponse response = monitor.dial(new NJPhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
+					new NJPhoneNumber("0383208100"), true, "A Test Call");
 
 			print("Dial sent, now waiting");
 
 
 			answerLatch.await();
 
-			print("Call answered");
+			print("Call connected");
 
 			// wait 10 seconds and hangup the call.
 			Thread.sleep(10000);
@@ -115,13 +115,13 @@ public class PBXMonitorTest
 			}
 
 			@Override
-			public void answered(EndPointEvent event)
+			public void connected(EndPointEvent event)
 			{
-				print("Saw Answer endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
+				print("Saw Connected endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
 						+ event.getUniqueCallId());
 				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
 				{
-					print("Answered endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
+					print("Connected endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
 							+ event.getUniqueCallId());
 
 					answerLatch.countDown();

@@ -15,7 +15,7 @@ public abstract class SubscriberAdapter implements Subscriber
 	}
 
 	@Override
-	public void answered(EndPointEvent event)
+	public void connected(EndPointEvent event)
 	{
 	}
 

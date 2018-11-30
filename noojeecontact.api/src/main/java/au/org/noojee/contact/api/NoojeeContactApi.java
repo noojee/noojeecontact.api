@@ -49,28 +49,19 @@ public class NoojeeContactApi
 		return status;
 	}
 
-	public DialResponse dial(PhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
-			PhoneNumber clid, boolean recordCall, String tagCall)
+	public DialResponse dial(NJPhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
+			NJPhoneNumber clid, boolean recordCall, String tagCall)
 			throws NoojeeContactApiException
 	{
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String encodedAutoAnswer = autoAnswer.getHeader();
-		try
-		{
-			encodedAutoAnswer = URLEncoder.encode(encodedAutoAnswer, "UTF-8");
-		}
-		catch (UnsupportedEncodingException e1)
-		{
-			// won't happen
-		}
-
+	
 		String query = "number=" + phoneNumber.compactString()
 				+ "&extenOrUniqueId=" + endPoint.compactString()
 				+ "&callerId=" + clid.compactString()
 				+ "&phoneCaption=" + phoneCaption
-				+ "&autoAnswer=" + encodedAutoAnswer;
+				+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
 
@@ -106,11 +97,11 @@ public class NoojeeContactApi
 
 		String query = "uniqueId=" + uniqueCallId.toString()
 				+ "&exten=" + endPoint.compactString()
-				+ "&answerString" + autoAnswer.getHeader();
+				+ "&answerString=" + autoAnswer.getEncodedHeader();
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/answer", authToken, query);
 
-		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
+		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
 		SimpleResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SimpleResponse.class);
 
@@ -365,6 +356,23 @@ public class NoojeeContactApi
 			return inbound;
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return "CallData [status=" + status+ ", inbound=" + inbound
+					+ ", callerId=" + callerId
+					+ ", uniqueCallId=" + uniqueCallId
+					+ ", canAnswer=" + canAnswer  
+					+ ", isQueueCall=" + isQueueCall
+					+ ", callStartTime=" + callStartTime  
+					+ ", isClickToDialCall=" + isClickToDialCall;
+		}
+
+		
+		
 	}
 
 	public class Event
@@ -378,10 +386,21 @@ public class NoojeeContactApi
 			return CallData.getStatus();
 		}
 
-		PhoneNumber getCallerId()
+		NJPhoneNumber getCallerId()
 		{
-			return new PhoneNumber(CallData.callerId);
+			return new NJPhoneNumber(CallData.callerId);
 		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return "Event [CallData=" + CallData + ", CallID=" + CallID + ", Code=" + Code + "]";
+		}
+		
+		
 	}
 
 	public class SubscribeResponse

@@ -21,6 +21,11 @@ public class EndPoint
 		return extensionNo;
 	}
 	
+	public String getExtensionNo()
+	{
+		return extensionNo;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
