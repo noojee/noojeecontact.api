@@ -47,8 +47,8 @@ public enum PBXMonitor
 	PBXMonitor()
 	{
 		logger.error("Starting PBX Monitor");
-		Throwable trace = new Throwable();
-		logger.error(trace, trace);
+//		Throwable trace = new Throwable();
+//		logger.error(trace, trace);
 	}
 
 	/**
