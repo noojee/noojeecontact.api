@@ -6,7 +6,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 
-import au.org.noojee.contact.api.NoojeeContactApi.DialResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 
 public class PBXMonitorTest
@@ -52,7 +51,7 @@ public class PBXMonitorTest
 			});
 			
 			print("dialing");
-			DialResponse response = monitor.dial(new NJPhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
+			monitor.dial(new NJPhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
 					new NJPhoneNumber("0383208100"), true, "A Test Call");
 
 			print("Dial sent, now waiting");

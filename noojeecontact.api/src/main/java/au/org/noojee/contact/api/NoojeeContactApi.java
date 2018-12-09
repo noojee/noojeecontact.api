@@ -1,9 +1,7 @@
 package au.org.noojee.contact.api;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -383,7 +381,8 @@ public class NoojeeContactApi
 
 		public EndPointStatus getStatus()
 		{
-			return CallData.getStatus();
+			
+			return (CallData != null ? CallData.getStatus() : EndPointStatus.Unknown);
 		}
 
 		NJPhoneNumber getCallerId()

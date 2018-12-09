@@ -6,5 +6,5 @@ public enum EndPointStatus
 {
 
 	@SerializedName("Dialing Out")
-	DialingOut, Connected, Ringing, Hungup;
+	DialingOut, Connected, Ringing, Hungup, Unknown;
 }

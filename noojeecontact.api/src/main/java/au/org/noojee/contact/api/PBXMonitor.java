@@ -78,12 +78,12 @@ public enum PBXMonitor
 		api = null;
 	}
 
-	private void checkStart()
-	{
-		// if (api == null)
-		// throw new IllegalStateException("You must call start() first.");
-
-	}
+//	private void checkStart()
+//	{
+//		// if (api == null)
+//		// throw new IllegalStateException("You must call start() first.");
+//
+//	}
 
 	synchronized public void subscribe(EndPoint endPoint, Subscriber subscriber)
 	{
@@ -207,7 +207,7 @@ public enum PBXMonitor
 			logger.error("#######################################################");
 			logger.error("shortSubscribeLoop is exiting");
 			logger.error("#######################################################");
-
+			
 		}
 
 		return null;
@@ -243,6 +243,17 @@ public enum PBXMonitor
 			logger.error("#######################################################");
 			logger.error("mainSubscribeLoop is exiting");
 			logger.error("#######################################################");
+			
+			// looks like we terminated abnormally so restart the loop.
+			if (running.get() == true)
+			{
+				logger.error("#######################################################");
+				logger.error("mainSubscribeLoop is restarting after abnormal termination");
+				logger.error("#######################################################");
+
+				subscriptionLoopPool.submit(() -> mainSubscribeLoop());
+			}
+	
 		}
 
 		return null;
@@ -261,7 +272,7 @@ public enum PBXMonitor
 					30);
 
 			// update the sequence no. from the response so we don't miss any data.
-			seqenceNo = response.seq;
+ 			seqenceNo = response.seq;
 			
 			// logger.error("http subscribe response recieved for "
 			// + endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
