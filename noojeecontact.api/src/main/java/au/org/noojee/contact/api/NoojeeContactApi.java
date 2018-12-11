@@ -18,7 +18,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class NoojeeContactApi
 {
-	@SuppressWarnings("unused")
 	private Logger logger = LogManager.getLogger();
 
 	private String fqdn;
