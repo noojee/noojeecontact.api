@@ -253,6 +253,12 @@ public enum PBXMonitor
 
 				subscriptionLoopPool.submit(() -> mainSubscribeLoop());
 			}
+			else
+			{
+				logger.error("#######################################################");
+				logger.error("mainSubscribeLoop is not restarting as running = false");
+				logger.error("#######################################################");
+			}
 	
 		}
 
@@ -284,6 +290,13 @@ public enum PBXMonitor
 			{
 				// logger.error("Event: " + event);
 				EndPoint endPoint = event.getEndPoint();
+				
+				if (event.getStatus() == null)
+				{
+					logger.warn("_subscribe event status == null {}", event);
+					continue;
+				}
+				
 				switch (event.getStatus())
 				{
 					// we use a thread pool (of 1) to do the callbacks as the doSubscribe thread can be
