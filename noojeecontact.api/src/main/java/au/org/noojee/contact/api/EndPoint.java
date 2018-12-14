@@ -7,26 +7,36 @@ public class EndPoint
 
 	public EndPoint(String extensionNo)
 	{
-		this.extensionNo = extensionNo;
-		this.tech = "SIP/";
+		String[] parts = extensionNo.split("/");
+		if (parts.length != 2)
+		{
+			this.tech = "SIP";
+			this.extensionNo = extensionNo;
+		}
+		else
+		{
+			this.tech = parts[0];
+			this.extensionNo = parts[1];
+		}
 	}
 
 	String compactString()
 	{
-		return tech + extensionNo;
+		return tech + "/" + extensionNo;
 	}
 
 	String compactStringNoTech()
 	{
 		return extensionNo;
 	}
-	
+
 	public String getExtensionNo()
 	{
 		return extensionNo;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -39,7 +49,8 @@ public class EndPoint
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -68,12 +79,11 @@ public class EndPoint
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public String toString()
 	{
 		return compactString();
 	}
-	
 
 }
