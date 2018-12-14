@@ -1,7 +1,9 @@
 package au.org.noojee.contact.api;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +59,7 @@ public class NoojeeContactApi
 		String query = "number=" + phoneNumber.compactString()
 				+ "&extenOrUniqueId=" + endPoint.compactString()
 				+ "&callerId=" + clid.compactString()
-				+ "&phoneCaption=" + phoneCaption
+				+ "&phoneCaption=" + getEncoded(phoneCaption)
 				+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
@@ -252,11 +254,21 @@ public class NoojeeContactApi
 		}
 	}
 
-	class DialResponse
+	public class DialResponse
 	{
-		String SessionID;
-		String Message;
-		int Code;
+		public final String SessionID;
+		public final String Message;
+		public final int Code;
+		
+		public DialResponse(String sessionID, String message, int code)
+		{
+			super();
+			SessionID = sessionID;
+			Message = message;
+			Code = code;
+		}
+		
+		
 	}
 
 	class Response<E>
@@ -431,5 +443,22 @@ public class NoojeeContactApi
 
 		}
 	}
+	
+	public String getEncoded(String value)
+	{
+		String encoded = value;
+		try
+		{
+			encoded =  URLEncoder.encode(value, "UTF-8");
+		}
+		catch (UnsupportedEncodingException e1)
+		{
+			// won't happen
+		}
+		
+		return encoded;
+
+	}
+
 
 }
