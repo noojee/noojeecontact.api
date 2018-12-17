@@ -24,10 +24,18 @@ public class EndPointEvent
 		return new EndPoint(extensionNo);
 	}
 	
-	public UniqueCallId getUniqueCallId()
+	public UniqueCallId getPrimaryUniqueCallId()
 	{
-		return event.CallData.getUniqueCallId();
+		return event.callData.getPrimaryUniqueCallId();
 	}
+	
+
+	public UniqueCallId getSecondaryUniqueCallId()
+	{
+		return event.callData.getPrimaryUniqueCallId();
+	}
+
+
 	
 
 	public NJPhoneNumber getCallerId()
@@ -38,7 +46,7 @@ public class EndPointEvent
 	
 	public boolean isInbound()
 	{
-		return event.CallData.isInbound();
+		return event.callData.isInbound();
 	}
 
 	
@@ -97,7 +105,6 @@ public class EndPointEvent
 			return false;
 		return true;
 	}
-
 		
 	
 
