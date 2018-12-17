@@ -1,6 +1,6 @@
 package au.org.noojee.contact.api;
 
-public interface Subscriber
+public interface Subscriber extends AutoCloseable
 {
 	void dialing(EndPointEvent event);
 

@@ -30,6 +30,12 @@ public abstract class SubscriberAdapter implements Subscriber
 	public void onError(NoojeeContactApiException e)
 	{
 	}
+	
+	@Override
+	public void close() 
+	{
+		PBXMonitor.SELF.unsubscribe(this);
+	}
 
 
 }
