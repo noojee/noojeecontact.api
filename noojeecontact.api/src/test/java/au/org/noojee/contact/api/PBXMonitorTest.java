@@ -13,6 +13,7 @@ public class PBXMonitorTest
 	EndPoint e100 = new EndPoint("100");
 	EndPoint e101 = new EndPoint("101");
 	EndPoint e115 = new EndPoint("115");
+	EndPoint e106 = new EndPoint("106");
 
 	// The call we are originating.
 	private UniqueCallId uniqueCallIdToMonitor = null;
@@ -39,6 +40,8 @@ public class PBXMonitorTest
 			CountDownLatch answerLatch = new CountDownLatch(1);
 
 			monitor.subscribe(monitor(answerLatch), e115);
+			
+			monitor.subscribe(monitor(answerLatch), e106);
 
 			monitor.subscribe(e115, new SubscriberAdapter()
 			{
@@ -93,35 +96,35 @@ public class PBXMonitorTest
 			@Override
 			public void hungup(EndPointEvent event)
 			{
-				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
+				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getPrimaryUniqueCallId()))
 				{
 					if (!seenHangup)
-						print("Call was hungup: " + event.getUniqueCallId() + " for EndPoint: "
+						print("Call was hungup: " + event.getPrimaryUniqueCallId() + " for EndPoint: "
 								+ event.getEndPoint().extensionNo);
 					seenHangup = true;
 					// monitor.stop();
 				}
 				else
-					print("saw old hangup for:" + event.getUniqueCallId());
+					print("saw old hangup for:" + event.getPrimaryUniqueCallId());
 			}
 
 			@Override
 			public void dialing(EndPointEvent event)
 			{
-				print("Recieved Dial Event: " + event.getEndPoint().extensionNo + " on " + event.getUniqueCallId());
+				print("Recieved Dial Event: " + event.getEndPoint().extensionNo + " on " + event.getPrimaryUniqueCallId());
 
-				uniqueCallIdToMonitor = event.getUniqueCallId();
+				uniqueCallIdToMonitor = event.getPrimaryUniqueCallId();
 			}
 
 			@Override
 			public void connected(EndPointEvent event)
 			{
 				print("Saw Connected endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
-						+ event.getUniqueCallId());
-				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getUniqueCallId()))
+						+ event.getPrimaryUniqueCallId());
+				if (uniqueCallIdToMonitor != null && uniqueCallIdToMonitor.equals(event.getPrimaryUniqueCallId()))
 				{
 					print("Connected endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
-							+ event.getUniqueCallId());
+							+ event.getPrimaryUniqueCallId());
 
 					answerLatch.countDown();
 				}
@@ -130,12 +133,12 @@ public class PBXMonitorTest
 			@Override
 			public void ringing(EndPointEvent event)
 			{
-				if (event.getEndPoint().extensionNo.equals("115"))
+				//if (event.getEndPoint().extensionNo.equals("115"))
 				{
-					uniqueCallIdToMonitor = event.getUniqueCallId();
+					uniqueCallIdToMonitor = event.getPrimaryUniqueCallId();
 
 					print("Ringing endPoint: " + event.getEndPoint().extensionNo + " uniqueCallId:"
-							+ event.getUniqueCallId());
+							+ event.getPrimaryUniqueCallId());
 				}
 			}
 
