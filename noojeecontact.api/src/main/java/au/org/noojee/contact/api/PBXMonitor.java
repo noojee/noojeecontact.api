@@ -85,12 +85,12 @@ public enum PBXMonitor
 	//
 	// }
 
-	synchronized public AutoCloseable subscribe(EndPoint endPoint, Subscriber subscriber)
+	synchronized public void subscribe(EndPoint endPoint, Subscriber subscriber)
 	{
-		return subscribe(subscriber, endPoint);
+		subscribe(subscriber, endPoint);
 	}
 
-	synchronized public AutoCloseable subscribe(Subscriber subscriber, EndPoint... endPoints)
+	synchronized public void subscribe(Subscriber subscriber, EndPoint... endPoints)
 	{
 		if (!running.get())
 		{
@@ -141,9 +141,6 @@ public enum PBXMonitor
 			// new handsets are subscribed simultaneously (via separate subscribe calls).
 			subscriptionLoopPool.submit(() -> shortSubscribeLoop(oneOffSubscription));
 		}
-		
-		return subscriber;
-
 	}
 
 	synchronized public void unsubscribe(Subscriber subscriber)

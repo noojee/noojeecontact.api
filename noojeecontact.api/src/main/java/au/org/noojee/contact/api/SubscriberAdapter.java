@@ -31,11 +31,11 @@ public abstract class SubscriberAdapter implements Subscriber
 	{
 	}
 	
-	@Override
-	public void close() 
-	{
-		PBXMonitor.SELF.unsubscribe(this);
-	}
+//	@Override
+//	public void close() 
+//	{
+//		PBXMonitor.SELF.unsubscribe(this);
+//	}
 
 
 }
