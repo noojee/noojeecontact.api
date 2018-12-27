@@ -213,7 +213,7 @@ public class NoojeeContactApi
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
-		logger.error("Subscribe response {}", response.getResponseBody());
+		logger.debug("Subscribe response {}", response.getResponseBody());
 
 		SubscribeResponse subscribeResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(),
 				SubscribeResponse.class);
