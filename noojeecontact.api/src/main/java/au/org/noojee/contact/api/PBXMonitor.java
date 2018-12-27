@@ -67,8 +67,7 @@ public enum PBXMonitor
 
 		running.set(true);
 
-		subscriptionLoopPool.submit(() -> mainSubscribeLoop());
-
+		new Thread(() -> mainSubscribeLoop(), "PBXMonitor:mainSubscribeLoop").start();
 	}
 
 	synchronized public void stop()
@@ -94,9 +93,10 @@ public enum PBXMonitor
 	{
 		if (!running.get())
 		{
-			IllegalStateException e = new IllegalStateException("The Montior is not running. Call " + this.name() + ".start()");
-			
-			logger.error(e,e);
+			IllegalStateException e = new IllegalStateException(
+					"The Montior is not running. Call " + this.name() + ".start()");
+
+			logger.error(e, e);
 			throw e;
 		}
 
@@ -232,7 +232,13 @@ public enum PBXMonitor
 				List<EndPointWrapper> endPoints = getCopyAndMarkAllEndPoints();
 
 				// subscribe to the list of end points.
-				_subscribe(endPoints);
+				if (endPoints.size() == 0)
+				{
+					logger.info("mainSubscribeLoop sleeping as no endPoints to monitor");
+					Thread.sleep(30000);
+				}
+				else
+					_subscribe(endPoints);
 
 				// logger.error("Looping on Thread " + Thread.currentThread().getId());
 
@@ -555,6 +561,16 @@ public enum PBXMonitor
 			return true;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString()
+		{
+			return "EndPointWrapper [endPoint=" + endPoint + ", servicedByMainLoop=" + servicedByMainLoop + "]";
+		}
+
 	}
 
 	/**
@@ -578,6 +594,6 @@ public enum PBXMonitor
 	public void hangup(EndPoint endPoint) throws NoojeeContactApiException
 	{
 		api.hangup(endPoint);
-		
+
 	}
 }
