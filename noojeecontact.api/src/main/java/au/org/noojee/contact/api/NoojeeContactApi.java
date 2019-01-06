@@ -191,7 +191,7 @@ public class NoojeeContactApi
 		return hangupResponse;
 	}
 
-	public SubscribeResponse subscribe(List<EndPoint> endPoints, long sequenceNo, int timeout)
+	public SubscribeResponse subscribe(List<EndPoint> endPoints, long sequenceNo, int timeout, String debugArg)
 			throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
@@ -207,7 +207,8 @@ public class NoojeeContactApi
 
 		String query = "exten=" + extensions
 				+ "&lastSequenceNumber=" + sequenceNo
-				+ "&timeOut=" + timeout;
+				+ "&timeOut=" + timeout
+				+ "&xDebugArg=" + debugArg;
 
 		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
 

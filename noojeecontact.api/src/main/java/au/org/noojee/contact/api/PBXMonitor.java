@@ -197,7 +197,7 @@ public enum PBXMonitor
 				}
 
 				// subscribe to the list of end points.
-				_subscribe(endPoints);
+				_subscribe(endPoints, "short");
 
 				// logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
 
@@ -238,7 +238,7 @@ public enum PBXMonitor
 					Thread.sleep(30000);
 				}
 				else
-					_subscribe(endPoints);
+					_subscribe(endPoints, "main");
 
 				// logger.error("Looping on Thread " + Thread.currentThread().getId());
 
@@ -276,7 +276,7 @@ public enum PBXMonitor
 		return null;
 	}
 
-	private Void _subscribe(List<EndPointWrapper> endPoints)
+	private Void _subscribe(List<EndPointWrapper> endPoints, String debugArg)
 	{
 		try
 		{
@@ -286,7 +286,7 @@ public enum PBXMonitor
 
 			SubscribeResponse response = api.subscribe(
 					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo,
-					30);
+					30, debugArg);
 
 			// update the sequence no. from the response so we don't miss any data.
 			seqenceNo = response.seq;
