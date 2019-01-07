@@ -39,26 +39,25 @@ public class PBXMonitorTest
 
 			CountDownLatch answerLatch = new CountDownLatch(1);
 
-			monitor.subscribe(monitor(answerLatch), e115);
-			
-			monitor.subscribe(monitor(answerLatch), e106);
+			monitor.subscribe(e115, monitor(answerLatch), "PBXMonitorTest");
+
+			monitor.subscribe(e106, monitor(answerLatch), "PBXMonitorTest");
 
 			monitor.subscribe(e115, new SubscriberAdapter()
 			{
-			});
+			}, "PBXMonitorTest");
 			monitor.subscribe(e101, new SubscriberAdapter()
 			{
-			});
+			}, "PBXMonitorTest");
 			monitor.subscribe(e100, new SubscriberAdapter()
 			{
-			});
-			
+			}, "PBXMonitorTest");
+
 			print("dialing");
 			monitor.dial(new NJPhoneNumber("106"), e115, "From PenTest", AutoAnswer.Yealink,
 					new NJPhoneNumber("0383208100"), true, "A Test Call");
 
 			print("Dial sent, now waiting");
-
 
 			answerLatch.await();
 
@@ -111,7 +110,8 @@ public class PBXMonitorTest
 			@Override
 			public void dialing(EndPointEvent event)
 			{
-				print("Recieved Dial Event: " + event.getEndPoint().extensionNo + " on " + event.getPrimaryUniqueCallId());
+				print("Recieved Dial Event: " + event.getEndPoint().extensionNo + " on "
+						+ event.getPrimaryUniqueCallId());
 
 				uniqueCallIdToMonitor = event.getPrimaryUniqueCallId();
 			}
@@ -133,7 +133,7 @@ public class PBXMonitorTest
 			@Override
 			public void ringing(EndPointEvent event)
 			{
-				//if (event.getEndPoint().extensionNo.equals("115"))
+				// if (event.getEndPoint().extensionNo.equals("115"))
 				{
 					uniqueCallIdToMonitor = event.getPrimaryUniqueCallId();
 
