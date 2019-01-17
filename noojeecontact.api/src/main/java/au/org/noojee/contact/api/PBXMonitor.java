@@ -287,6 +287,13 @@ public enum PBXMonitor
 			SubscribeResponse response = api.subscribe(
 					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo,
 					30, debugArg);
+			
+			if (response == null)
+			{
+				logger.error("Subscribe returned null. PBX is probably down for maintenance");
+				return null; // pbx is probably down
+			}
+	
 
 			// update the sequence no. from the response so we don't miss any data.
 			seqenceNo = response.seq;
