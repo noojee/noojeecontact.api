@@ -13,6 +13,8 @@ import javax.net.ssl.HttpsURLConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import au.org.noojee.api.enums.Protocol;
+
 public class NoojeeContactProtocalImpl
 {
 	private Logger logger = LogManager.getLogger();
@@ -44,12 +46,12 @@ public class NoojeeContactProtocalImpl
 	}
 
 	
-	public URL generateURL(String fqdn, String entity, String apiKey, String query)
+	public URL generateURL(Protocol protocol, String fqdn, String entity, String apiKey, String query)
 	{
 		URL url = null;
 		try
 		{
-			url = new URL("https://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey + (query != null ? "&" + query : ""));
+			url = new URL(protocol + "://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey + (query != null ? "&" + query : ""));
 		}
 		catch (MalformedURLException e)
 		{

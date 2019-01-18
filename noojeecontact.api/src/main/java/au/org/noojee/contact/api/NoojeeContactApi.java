@@ -15,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
+import au.org.noojee.api.enums.Protocol;
+import au.org.noojee.api.enums.Tech;
 import au.org.noojee.contact.api.NoojeeContactProtocalImpl.HTTPMethod;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -24,11 +26,19 @@ public class NoojeeContactApi
 
 	private String fqdn;
 	private String authToken;
-
-	public NoojeeContactApi(String fqdn, String authToken)
+	private Protocol protocol;
+public NoojeeContactApi(String fqdn, String authToken, Protocol protocol)
 	{
 		this.fqdn = fqdn;
 		this.authToken = authToken;
+		this.protocol = protocol;
+		NoojeeContactProtocalImpl.init();
+	}
+	
+	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol, Tech tech ) {
+		this.fqdn = fqdn;
+		this.authToken = authToken;
+		this.protocol = protocol;
 		NoojeeContactProtocalImpl.init();
 	}
 
@@ -39,7 +49,7 @@ public class NoojeeContactApi
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		URL url = gateway.generateURL(fqdn, "systemHealth/test", authToken, null);
+		URL url = gateway.generateURL(protocol, fqdn, "systemHealth/test", authToken, null);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -64,7 +74,7 @@ public class NoojeeContactApi
 				+ "&phoneCaption=" + getEncoded(phoneCaption)
 				+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/dial", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -88,7 +98,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 			+ "&phoneCaption=" + getEncoded(phoneCaption)
 			+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
 
-	URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
+	URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/dial", authToken, query);
 
 	HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -118,7 +128,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 
 		String query = "extenOrUniqueId=" + extenOrUniqueId;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/hangup", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/hangup", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -138,7 +148,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 				+ "&exten=" + endPoint.compactString()
 				+ "&answerString=" + autoAnswer.getEncodedHeader();
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/answer", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/answer", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -156,7 +166,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 				+ "&tag" + tag
 				+ "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/start", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/start", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -176,7 +186,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 
 		// agentLoginName?
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/start", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/start", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -193,7 +203,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 		String query = "extenOrUniqueId=" + uniqueCallId.toString()
 				+ "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/stop", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/stop", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -211,7 +221,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 		String query = "extenOrUniqueId=" + endPoint.compactString()
 				+ "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/stop", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/stop", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -239,7 +249,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 				+ "&timeOut=" + timeout
 				+ "&xDebugArg=" + debugArg;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/subscribe", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -265,7 +275,7 @@ public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoi
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		URL url = gateway.generateURL(fqdn, "rosterApi/getActiveRosters", authToken, "teamName=" + team);
+		URL url = gateway.generateURL(protocol, fqdn, "rosterApi/getActiveRosters", authToken, "teamName=" + team);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 

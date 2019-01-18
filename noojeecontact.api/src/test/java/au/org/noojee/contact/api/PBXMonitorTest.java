@@ -6,6 +6,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 
+import au.org.noojee.api.enums.Protocol;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 
 public class PBXMonitorTest
@@ -33,7 +34,8 @@ public class PBXMonitorTest
 		try
 		{
 			monitor.start("pentest.clouddialer.com.au",
-					"1981a2cc-db08-11e8-a033-0016ec037d28");
+					"1981a2cc-db08-11e8-a033-0016ec037d28",
+					Protocol.HTTPS);
 
 			seenHangup = false;
 

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import au.org.noojee.api.enums.Protocol;
 import au.org.noojee.contact.api.NoojeeContactApi.DialResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
@@ -58,9 +59,9 @@ public enum PBXMonitor
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
+	synchronized public void start(String fqdn, String apiToken, Protocol protocol) throws NoojeeContactApiException
 	{
-		this.api = new NoojeeContactApi(fqdn, apiToken);
+		this.api = new NoojeeContactApi(fqdn, apiToken, protocol);
 
 		if (running.get() == true)
 			throw new IllegalStateException("The PBXMonitor is already running.");

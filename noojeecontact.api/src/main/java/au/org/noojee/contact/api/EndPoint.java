@@ -1,5 +1,7 @@
 package au.org.noojee.contact.api;
 
+import au.org.noojee.api.enums.Tech;
+
 public class EndPoint
 {
 	final String extensionNo;
@@ -10,7 +12,7 @@ public class EndPoint
 		String[] parts = extensionNo.split("/");
 		if (parts.length != 2)
 		{
-			this.tech = "SIP";
+			this.tech = Tech.SIP.name();
 			this.extensionNo = extensionNo;
 		}
 		else
@@ -20,6 +22,15 @@ public class EndPoint
 		}
 	}
 
+	public EndPoint(Tech techEnum, String extensionNo)
+	{
+	
+			this.extensionNo = extensionNo;
+			this.tech = techEnum.name();
+			
+		
+	}
+	
 	String compactString()
 	{
 		return tech + "/" + extensionNo;
