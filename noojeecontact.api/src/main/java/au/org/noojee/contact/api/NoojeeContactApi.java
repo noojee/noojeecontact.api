@@ -52,6 +52,9 @@ public class NoojeeContactApi
 			NJPhoneNumber clid, boolean recordCall, String tagCall)
 			throws NoojeeContactApiException
 	{
+		
+
+
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
@@ -70,6 +73,32 @@ public class NoojeeContactApi
 		return dialResponse;
 	}
 
+
+
+public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoint, String phoneCaption, AutoAnswer autoAnswer,
+		EndPoint clid, boolean recordCall, String tagCall)
+		throws NoojeeContactApiException
+{
+
+	NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
+
+	String query = "number=" + DialedEndPoint.compactStringNoTech()
+			+ "&extenOrUniqueId=" + DialingEndPoint.compactString()
+			+ "&callerId=" + clid.compactStringNoTech()
+			+ "&phoneCaption=" + getEncoded(phoneCaption)
+			+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
+
+	URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
+
+	HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
+
+	DialResponse dialResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), DialResponse.class);
+
+	return dialResponse;
+	
+	}
+
+	
 	public SimpleResponse hangup(UniqueCallId uniqueCallId)
 			throws NoojeeContactApiException
 	{
