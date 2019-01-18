@@ -5,32 +5,32 @@ import au.org.noojee.api.enums.Tech;
 public class EndPoint
 {
 	final String extensionNo;
-	final String tech;
+	final Tech tech;
 
 	public EndPoint(String extensionNo)
 	{
 		String[] parts = extensionNo.split("/");
 		if (parts.length != 2)
 		{
-			this.tech = Tech.SIP.name();
+
+			this.tech = Tech.SIP;
 			this.extensionNo = extensionNo;
 		}
 		else
 		{
-			this.tech = parts[0];
+			this.tech = Tech.valueOf(parts[0]);
 			this.extensionNo = parts[1];
 		}
 	}
 
-	public EndPoint(Tech techEnum, String extensionNo)
+	public EndPoint(Tech tech, String extensionNo)
 	{
-	
-			this.extensionNo = extensionNo;
-			this.tech = techEnum.name();
-			
-		
+
+		this.extensionNo = extensionNo;
+		this.tech = tech;
+
 	}
-	
+
 	String compactString()
 	{
 		return tech + "/" + extensionNo;
