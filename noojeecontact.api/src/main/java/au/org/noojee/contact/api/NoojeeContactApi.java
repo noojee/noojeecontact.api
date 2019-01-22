@@ -19,21 +19,24 @@ import au.org.noojee.api.enums.Protocol;
 import au.org.noojee.contact.api.NoojeeContactProtocalImpl.HTTPMethod;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class NoojeeContactApi {
+public class NoojeeContactApi
+{
 	private Logger logger = LogManager.getLogger();
 
 	private String fqdn;
 	private String authToken;
 	private Protocol protocol;
 
-	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol) {
+	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol)
+	{
 		this.fqdn = fqdn;
 		this.authToken = authToken;
 		this.protocol = protocol;
 		NoojeeContactProtocalImpl.init();
 	}
 
-	public NoojeeContactStatistics getStatistics() throws NoojeeContactApiException {
+	public NoojeeContactStatistics getStatistics() throws NoojeeContactApiException
+	{
 		NoojeeContactStatistics status = null;
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
@@ -48,7 +51,8 @@ public class NoojeeContactApi {
 	}
 
 	public DialResponse dial(NJPhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
-			NJPhoneNumber clid, boolean recordCall, String tagCall) throws NoojeeContactApiException {
+			NJPhoneNumber clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
+	{
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
@@ -66,7 +70,8 @@ public class NoojeeContactApi {
 	}
 
 	public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoint, String phoneCaption,
-			AutoAnswer autoAnswer, EndPoint clid, boolean recordCall, String tagCall) throws NoojeeContactApiException {
+			AutoAnswer autoAnswer, EndPoint clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
+	{
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
@@ -84,16 +89,13 @@ public class NoojeeContactApi {
 
 	}
 
-	public SimpleResponse hangup(UniqueCallId uniqueCallId) throws NoojeeContactApiException {
+	public SimpleResponse hangup(UniqueCallId uniqueCallId) throws NoojeeContactApiException
+	{
 		return hangup(uniqueCallId.toString());
 	}
 
-	public SimpleResponse hangup(EndPoint endPoint) throws NoojeeContactApiException {
-		return hangup(endPoint.extensionNo);
-
-	}
-
-	public SimpleResponse hangup(String extenOrUniqueId) throws NoojeeContactApiException {
+	public SimpleResponse hangup(String extenOrUniqueId) throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "extenOrUniqueId=" + extenOrUniqueId;
@@ -110,7 +112,8 @@ public class NoojeeContactApi {
 	}
 
 	public SimpleResponse answer(UniqueCallId uniqueCallId, EndPoint endPoint, AutoAnswer autoAnswer)
-			throws NoojeeContactApiException {
+			throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "uniqueId=" + uniqueCallId.toString() + "&exten=" + endPoint.compactString() + "&answerString="
@@ -126,7 +129,8 @@ public class NoojeeContactApi {
 	}
 
 	public SimpleResponse startRecording(UniqueCallId uniqueCallId, String username, String tag)
-			throws NoojeeContactApiException {
+			throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "extenOrUniqueId=" + uniqueCallId.toString() + "&tag" + tag + "&agentLoginName=" + username;
@@ -141,7 +145,8 @@ public class NoojeeContactApi {
 	}
 
 	public SimpleResponse startRecording(EndPoint endPoint, String username, String tag)
-			throws NoojeeContactApiException {
+			throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "extenOrUniqueId=" + endPoint.compactString() + "&tag" + tag + "&agentLoginName=" + username;
@@ -157,7 +162,8 @@ public class NoojeeContactApi {
 		return hangupResponse;
 	}
 
-	public SimpleResponse stopRecording(UniqueCallId uniqueCallId, String username) throws NoojeeContactApiException {
+	public SimpleResponse stopRecording(UniqueCallId uniqueCallId, String username) throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "extenOrUniqueId=" + uniqueCallId.toString() + "&agentLoginName=" + username;
@@ -171,7 +177,8 @@ public class NoojeeContactApi {
 		return hangupResponse;
 	}
 
-	public SimpleResponse stopRecording(EndPoint endPoint, String username) throws NoojeeContactApiException {
+	public SimpleResponse stopRecording(EndPoint endPoint, String username) throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		// agentLoginName?
@@ -187,12 +194,14 @@ public class NoojeeContactApi {
 	}
 
 	public SubscribeResponse subscribe(List<EndPoint> endPoints, long sequenceNo, int timeout, String debugArg)
-			throws NoojeeContactApiException {
+			throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String extensions = "";
 
-		for (EndPoint endPoint : endPoints) {
+		for (EndPoint endPoint : endPoints)
+		{
 			if (extensions.length() > 0)
 				extensions += ",";
 			extensions += endPoint.compactStringNoTech();
@@ -222,14 +231,16 @@ public class NoojeeContactApi {
 	 * @return
 	 * @throws NoojeeContactApiException
 	 */
-	public List<Shift> getActiveShifts(String team) throws NoojeeContactApiException {
+	public List<Shift> getActiveShifts(String team) throws NoojeeContactApiException
+	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		URL url = gateway.generateURL(protocol, fqdn, "rosterApi/getActiveRosters", authToken, "teamName=" + team);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
-		Type type = new TypeToken<Response<Shift>>() {
+		Type type = new TypeToken<Response<Shift>>()
+		{
 		}.getType();
 
 		Response<Shift> gsonResponse = GsonForNoojeeContact.fromJsonTypedObject(response.getResponseBody(), type);
@@ -240,25 +251,30 @@ public class NoojeeContactApi {
 		return gsonResponse.getList();
 	}
 
-	class SimpleResponse {
+	public class SimpleResponse
+	{
 		private String Message;
 		private int Code;
 
-		boolean wasSuccessful() {
+		public boolean wasSuccessful()
+		{
 			return Code == 0;
 		}
 
-		public String getMessage() {
+		public String getMessage()
+		{
 			return Message;
 		}
 	}
 
-	public class DialResponse {
+	public class DialResponse
+	{
 		public final String SessionID;
 		public final String Message;
 		public final int Code;
 
-		public DialResponse(String sessionID, String message, int code) {
+		public DialResponse(String sessionID, String message, int code)
+		{
 			super();
 			SessionID = sessionID;
 			Message = message;
@@ -267,7 +283,8 @@ public class NoojeeContactApi {
 
 	}
 
-	class Response<E> {
+	class Response<E>
+	{
 		String type;
 		int code;
 		String message;
@@ -275,25 +292,28 @@ public class NoojeeContactApi {
 		@SuppressFBWarnings
 		List<E> entities;
 
-		public List<E> getList() {
+		public List<E> getList()
+		{
 			return entities;
 		}
 
-		public String getMessage() {
+		public String getMessage()
+		{
 			return message;
 		}
 
-		public int getCode() {
+		public int getCode()
+		{
 			return code;
 		}
 	}
 
-	public class CallData {
+	public class CallData
+	{
 		private boolean canAnswer;
 		private String callerId;
 		/**
-		 * Unique id of the primary channel - the end point (normally an extension) that
-		 * the call is originated from.
+		 * Unique id of the primary channel - the end point (normally an extension) that the call is originated from.
 		 */
 		@SerializedName(value = "uniqueCallId")
 		private UniqueCallId primaryUniqueCallId;
@@ -310,67 +330,76 @@ public class NoojeeContactApi {
 		private boolean inbound;
 		private EndPointStatus status;
 
-		public EndPointStatus getStatus() {
+		public EndPointStatus getStatus()
+		{
 			return status;
 		}
 
-		public UniqueCallId getPrimaryUniqueCallId() {
+		public UniqueCallId getPrimaryUniqueCallId()
+		{
 			return primaryUniqueCallId;
 		}
 
-		public UniqueCallId getSecondaryUniqueCallId() {
+		public UniqueCallId getSecondaryUniqueCallId()
+		{
 			return secondaryUniqueCallId;
 		}
 
 		/**
 		 * @return the canAnswer
 		 */
-		public boolean isCanAnswer() {
+		public boolean isCanAnswer()
+		{
 			return canAnswer;
 		}
 
 		/**
 		 * @return the callerId
 		 */
-		public String getCallerId() {
+		public String getCallerId()
+		{
 			return callerId;
 		}
 
 		/**
 		 * @return the callStartTime
 		 */
-		public LocalDateTime getCallStartTime() {
+		public LocalDateTime getCallStartTime()
+		{
 			return callStartTime;
 		}
 
 		/**
 		 * @return the isQueueCall
 		 */
-		public boolean isQueueCall() {
+		public boolean isQueueCall()
+		{
 			return isQueueCall;
 		}
 
 		/**
 		 * @return the isClickToDialCall
 		 */
-		public boolean isClickToDialCall() {
+		public boolean isClickToDialCall()
+		{
 			return isClickToDialCall;
 		}
 
 		/**
 		 * @return the inbound
 		 */
-		public boolean isInbound() {
+		public boolean isInbound()
+		{
 			return inbound;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
-		public String toString() {
+		public String toString()
+		{
 			return "CallData [canAnswer=" + canAnswer + ", callerId=" + callerId + ", primaryUniqueCallId="
 					+ primaryUniqueCallId + ", secondaryUniqueCallId=" + secondaryUniqueCallId + ", callStartTime="
 					+ callStartTime + ", isQueueCall=" + isQueueCall + ", isClickToDialCall=" + isClickToDialCall
@@ -379,7 +408,8 @@ public class NoojeeContactApi {
 
 	}
 
-	public class Event {
+	public class Event
+	{
 		@SerializedName(value = "CallData")
 		CallData callData;
 		@SerializedName(value = "CallID")
@@ -387,28 +417,31 @@ public class NoojeeContactApi {
 		@SerializedName(value = "Code")
 		int code;
 
-		public EndPointStatus getStatus() {
+		public EndPointStatus getStatus()
+		{
 
 			return (callData != null ? callData.getStatus() : EndPointStatus.Unknown);
 		}
 
-		NJPhoneNumber getCallerId() {
+		NJPhoneNumber getCallerId()
+		{
 			return new NJPhoneNumber(callData.callerId);
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
-		public String toString() {
+		public String toString()
+		{
 			return "Event [CallData=" + callData + ", CallID=" + callID + ", Code=" + code + "]";
 		}
 
 	}
 
-	public class SubscribeResponse {
+	public class SubscribeResponse
+	{
 		// {"Data":{"115":[{"CallData":{"callerId":"106","uniqueCallId":"1543022361.57","callStartTime":"","isQueueCall":false,"isClickToDialCall":false,"inbound":false,"status":"Dialing
 		// Out","otherPartyCallerId":"106","connectedCallerIdNum":"","outboundDestination":"106"},"CallID":27,"Code":0}]},"seq":114,"Code":0}
 
@@ -418,13 +451,16 @@ public class NoojeeContactApi {
 		long seq;
 		int Code;
 
-		public List<EndPointEvent> getEvents() {
+		public List<EndPointEvent> getEvents()
+		{
 			List<EndPointEvent> allEvents = new ArrayList<>();
 
-			for (String extensionNo : endPointEventMap.keySet()) {
+			for (String extensionNo : endPointEventMap.keySet())
+			{
 				List<Event> endPointEvents = endPointEventMap.get(extensionNo);
 
-				for (Event event : endPointEvents) {
+				for (Event event : endPointEvents)
+				{
 					EndPointEvent endPointEvent = new EndPointEvent(extensionNo, event);
 					allEvents.add(endPointEvent);
 				}
@@ -435,11 +471,15 @@ public class NoojeeContactApi {
 		}
 	}
 
-	public String getEncoded(String value) {
+	public String getEncoded(String value)
+	{
 		String encoded = value;
-		try {
+		try
+		{
 			encoded = URLEncoder.encode(value, "UTF-8");
-		} catch (UnsupportedEncodingException e1) {
+		}
+		catch (UnsupportedEncodingException e1)
+		{
 			// won't happen
 		}
 
