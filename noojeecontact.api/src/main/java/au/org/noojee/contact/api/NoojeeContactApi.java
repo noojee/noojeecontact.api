@@ -94,6 +94,12 @@ public class NoojeeContactApi
 		return hangup(uniqueCallId.toString());
 	}
 
+	public SimpleResponse hangup(EndPoint endPoint) throws NoojeeContactApiException
+	{
+		return hangup(endPoint.extensionNo);
+
+	}
+
 	public SimpleResponse hangup(String extenOrUniqueId) throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();

@@ -616,4 +616,9 @@ public enum PBXMonitor
 		return api.internalDial(DialedEndPoint, DialingEndPoint, phoneCaption, autoAnswer, clid, recordCall, tagCall);
 	}
 
+	public SimpleResponse hangup(EndPoint endPoint) throws NoojeeContactApiException
+	{
+		return api.hangup(endPoint);
+	}
+
 }
