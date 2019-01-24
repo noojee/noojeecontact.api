@@ -4,11 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +20,7 @@ public class NoojeeContactProtocalImpl
 	public static final int PAGE_SIZE = 50;
 
 	private static volatile NoojeeContactProtocalImpl self;
-	
+
 	public enum HTTPMethod
 	{
 		GET, POST, PUT, DELETE
@@ -39,38 +38,37 @@ public class NoojeeContactProtocalImpl
 			self = new NoojeeContactProtocalImpl();
 		}
 	}
+
 	private NoojeeContactProtocalImpl()
 	{
 		System.setProperty("http.maxConnections", "8"); // set globally only
 														// once
 	}
 
-	
 	public URL generateURL(Protocol protocol, String fqdn, String entity, String apiKey, String query)
 	{
 		URL url = null;
 		try
 		{
-			url = new URL(protocol + "://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey + (query != null ? "&" + query : ""));
+			url = new URL(protocol + "://" + fqdn + "/servicemanager/rest/" + entity + "?apiKey=" + apiKey
+					+ (query != null ? "&" + query : ""));
 		}
 		catch (MalformedURLException e)
 		{
-			logger.error(e,e);
+			logger.error(e, e);
 		}
-		
+
 		return url;
-		
+
 	}
 
-
-	
 	HTTPResponse request(HTTPMethod method, URL url, String jsonBody) throws NoojeeContactApiException
 	{
-		return request(method, url, jsonBody,  "application/json");
+		return request(method, url, jsonBody, "application/json");
 	}
 
-
-	HTTPResponse request(HTTPMethod method, URL url, String jsonBody, String contentType) throws NoojeeContactApiException
+	HTTPResponse request(HTTPMethod method, URL url, String jsonBody, String contentType)
+			throws NoojeeContactApiException
 	{
 
 		HTTPResponse response;
@@ -83,14 +81,14 @@ public class NoojeeContactProtocalImpl
 
 		return response;
 	}
-	
-	
+
 	/**
 	 * Returns a raw response string.
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	private HTTPResponse _request(HTTPMethod method, URL url, String jsonBody, String contentType) throws NoojeeContactApiException
+	private HTTPResponse _request(HTTPMethod method, URL url, String jsonBody, String contentType)
+			throws NoojeeContactApiException
 	{
 		HTTPResponse response = null;
 
@@ -98,17 +96,17 @@ public class NoojeeContactProtocalImpl
 		{
 
 			logger.debug(method + " url: " + url);
-			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod(method.toString());
 			connection.setDoOutput(true);
 			connection.setAllowUserInteraction(false); // no users here so don't do
 														// anything silly.
-			
+
 			connection.setConnectTimeout(5000);
 
 			connection.setRequestProperty("Content-Type", contentType + "; charset=UTF-8");
-			
+
 			connection.connect();
 
 			// Write the body if any exist.
@@ -194,6 +192,5 @@ public class NoojeeContactProtocalImpl
 		}
 		return "";
 	}
-
 
 }
