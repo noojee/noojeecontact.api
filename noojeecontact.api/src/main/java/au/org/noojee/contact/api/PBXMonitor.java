@@ -71,6 +71,12 @@ public enum PBXMonitor
 		new Thread(() -> mainSubscribeLoop("PBXMonitor-start()"), "PBXMonitor:mainSubscribeLoop").start();
 	}
 
+	
+	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
+	{
+		start(fqdn, apiToken, Protocol.HTTPS);
+	}
+
 	synchronized public void start(String fqdn, String apiToken, Protocol protocol) throws NoojeeContactApiException
 	{
 		this.api = new NoojeeContactApi(fqdn, apiToken, protocol);
