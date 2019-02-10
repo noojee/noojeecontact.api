@@ -4,11 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,9 +93,10 @@ public class NoojeeContactProtocalImpl
 
 		try
 		{
+			
 
 			logger.debug(method + " url: " + url);
-			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod(method.toString());
 			connection.setDoOutput(true);
