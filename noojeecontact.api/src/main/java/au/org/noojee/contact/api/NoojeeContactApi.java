@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
+import au.org.noojee.api.enums.Protocol;
 import au.org.noojee.contact.api.NoojeeContactProtocalImpl.HTTPMethod;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -24,22 +25,23 @@ public class NoojeeContactApi
 
 	private String fqdn;
 	private String authToken;
+	private Protocol protocol;
 
-	public NoojeeContactApi(String fqdn, String authToken)
+	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol)
 	{
 		this.fqdn = fqdn;
 		this.authToken = authToken;
+		this.protocol = protocol;
 		NoojeeContactProtocalImpl.init();
 	}
 
-	public NoojeeContactStatistics getStatistics()
-			throws NoojeeContactApiException
+	public NoojeeContactStatistics getStatistics() throws NoojeeContactApiException
 	{
 		NoojeeContactStatistics status = null;
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		URL url = gateway.generateURL(fqdn, "systemHealth/test", authToken, null);
+		URL url = gateway.generateURL(protocol, fqdn, "systemHealth/test", authToken, null);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -49,19 +51,16 @@ public class NoojeeContactApi
 	}
 
 	public DialResponse dial(NJPhoneNumber phoneNumber, EndPoint endPoint, String phoneCaption, AutoAnswer autoAnswer,
-			NJPhoneNumber clid, boolean recordCall, String tagCall)
-			throws NoojeeContactApiException
+			NJPhoneNumber clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
 	{
 
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String query = "number=" + phoneNumber.compactString()
-				+ "&extenOrUniqueId=" + endPoint.compactString()
-				+ "&callerId=" + clid.compactString()
-				+ "&phoneCaption=" + getEncoded(phoneCaption)
-				+ "&autoAnswer=" + autoAnswer.getEncodedHeader();
+		String query = "number=" + phoneNumber.compactString() + "&extenOrUniqueId=" + endPoint.compactString()
+				+ "&callerId=" + clid.compactString() + "&phoneCaption=" + getEncoded(phoneCaption) + "&autoAnswer="
+				+ autoAnswer.getEncodedHeader();
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/dial", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/dial", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -70,8 +69,27 @@ public class NoojeeContactApi
 		return dialResponse;
 	}
 
-	public SimpleResponse hangup(UniqueCallId uniqueCallId)
-			throws NoojeeContactApiException
+	public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoint, String phoneCaption,
+			AutoAnswer autoAnswer, EndPoint clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
+	{
+
+		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
+
+		String query = "number=" + DialedEndPoint.compactStringNoTech() + "&extenOrUniqueId="
+				+ DialingEndPoint.compactString() + "&callerId=" + clid.compactStringNoTech() + "&phoneCaption="
+				+ getEncoded(phoneCaption) + "&autoAnswer=" + autoAnswer.getEncodedHeader();
+
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/dial", authToken, query);
+
+		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
+
+		DialResponse dialResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), DialResponse.class);
+
+		return dialResponse;
+
+	}
+
+	public SimpleResponse hangup(UniqueCallId uniqueCallId) throws NoojeeContactApiException
 	{
 		return hangup(uniqueCallId.toString());
 	}
@@ -81,15 +99,14 @@ public class NoojeeContactApi
 		return hangup(endPoint.extensionNo);
 
 	}
-	
-	public SimpleResponse hangup(String extenOrUniqueId)
-			throws NoojeeContactApiException
+
+	public SimpleResponse hangup(String extenOrUniqueId) throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		String query = "extenOrUniqueId=" + extenOrUniqueId;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/hangup", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/hangup", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -105,11 +122,10 @@ public class NoojeeContactApi
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String query = "uniqueId=" + uniqueCallId.toString()
-				+ "&exten=" + endPoint.compactString()
-				+ "&answerString=" + autoAnswer.getEncodedHeader();
+		String query = "uniqueId=" + uniqueCallId.toString() + "&exten=" + endPoint.compactString() + "&answerString="
+				+ autoAnswer.getEncodedHeader();
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/answer", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/answer", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -123,11 +139,9 @@ public class NoojeeContactApi
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String query = "extenOrUniqueId=" + uniqueCallId.toString()
-				+ "&tag" + tag
-				+ "&agentLoginName=" + username;
+		String query = "extenOrUniqueId=" + uniqueCallId.toString() + "&tag" + tag + "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/start", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/start", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -141,13 +155,11 @@ public class NoojeeContactApi
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String query = "extenOrUniqueId=" + endPoint.compactString()
-				+ "&tag" + tag
-				+ "&agentLoginName=" + username;
+		String query = "extenOrUniqueId=" + endPoint.compactString() + "&tag" + tag + "&agentLoginName=" + username;
 
 		// agentLoginName?
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/start", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/start", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -156,15 +168,13 @@ public class NoojeeContactApi
 		return hangupResponse;
 	}
 
-	public SimpleResponse stopRecording(UniqueCallId uniqueCallId, String username)
-			throws NoojeeContactApiException
+	public SimpleResponse stopRecording(UniqueCallId uniqueCallId, String username) throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		String query = "extenOrUniqueId=" + uniqueCallId.toString()
-				+ "&agentLoginName=" + username;
+		String query = "extenOrUniqueId=" + uniqueCallId.toString() + "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/stop", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/stop", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -173,16 +183,14 @@ public class NoojeeContactApi
 		return hangupResponse;
 	}
 
-	public SimpleResponse stopRecording(EndPoint endPoint, String username)
-			throws NoojeeContactApiException
+	public SimpleResponse stopRecording(EndPoint endPoint, String username) throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
 		// agentLoginName?
-		String query = "extenOrUniqueId=" + endPoint.compactString()
-				+ "&agentLoginName=" + username;
+		String query = "extenOrUniqueId=" + endPoint.compactString() + "&agentLoginName=" + username;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/stop", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/stop", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -205,12 +213,10 @@ public class NoojeeContactApi
 			extensions += endPoint.compactStringNoTech();
 		}
 
-		String query = "exten=" + extensions
-				+ "&lastSequenceNumber=" + sequenceNo
-				+ "&timeOut=" + timeout
+		String query = "exten=" + extensions + "&lastSequenceNumber=" + sequenceNo + "&timeOut=" + timeout
 				+ "&xDebugArg=" + debugArg;
 
-		URL url = gateway.generateURL(fqdn, "CallManagementAPI/subscribe", authToken, query);
+		URL url = gateway.generateURL(protocol, fqdn, "CallManagementAPI/subscribe", authToken, query);
 
 		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
 
@@ -231,12 +237,11 @@ public class NoojeeContactApi
 	 * @return
 	 * @throws NoojeeContactApiException
 	 */
-	public List<Shift> getActiveShifts(String team)
-			throws NoojeeContactApiException
+	public List<Shift> getActiveShifts(String team) throws NoojeeContactApiException
 	{
 		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
 
-		URL url = gateway.generateURL(fqdn, "rosterApi/getActiveRosters", authToken, "teamName=" + team);
+		URL url = gateway.generateURL(protocol, fqdn, "rosterApi/getActiveRosters", authToken, "teamName=" + team);
 
 		HTTPResponse response = gateway.request(HTTPMethod.GET, url, null);
 
@@ -252,12 +257,12 @@ public class NoojeeContactApi
 		return gsonResponse.getList();
 	}
 
-	class SimpleResponse
+	public class SimpleResponse
 	{
 		private String Message;
 		private int Code;
 
-		boolean wasSuccessful()
+		public boolean wasSuccessful()
 		{
 			return Code == 0;
 		}
@@ -319,9 +324,11 @@ public class NoojeeContactApi
 		@SerializedName(value = "uniqueCallId")
 		private UniqueCallId primaryUniqueCallId;
 
-		// when a call starts 'ringing' or is answered the 'ringing' and 'connected' events are generated and this field
+		// when a call starts 'ringing' or is answered the 'ringing' and 'connected'
+		// events are generated and this field
 		// will
-		// then contain the uniqueCallid of the 2channel (usually the remote phone number that we are dialing)
+		// then contain the uniqueCallid of the 2channel (usually the remote phone
+		// number that we are dialing)
 		private UniqueCallId secondaryUniqueCallId;
 		private LocalDateTime callStartTime;
 		private boolean isQueueCall;

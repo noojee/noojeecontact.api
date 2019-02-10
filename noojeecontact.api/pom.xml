@@ -20,11 +20,11 @@
 	</build>
 
 	<distributionManagement>
-    	<snapshotRepository>
-        	<id>snapshots</id>
-        	<name>nit-snapshots</name>
-        	<url>https://nit.jfrog.io/nit/libs-snapshot-local</url>
-    	</snapshotRepository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>nit-snapshots</name>
+			<url>https://nit.jfrog.io/nit/libs-snapshot-local</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 	<dependencies>

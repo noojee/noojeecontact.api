@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import au.org.noojee.api.enums.Protocol;
 import au.org.noojee.contact.api.NoojeeContactApi.DialResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
@@ -58,9 +59,21 @@ public enum PBXMonitor
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
-	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
+	synchronized public void start(NoojeeContactApi api) throws NoojeeContactApiException
 	{
-		this.api = new NoojeeContactApi(fqdn, apiToken);
+		this.api = api;
+
+		if (running.get() == true)
+			throw new IllegalStateException("The PBXMonitor is already running.");
+
+		running.set(true);
+
+		new Thread(() -> mainSubscribeLoop("PBXMonitor-start()"), "PBXMonitor:mainSubscribeLoop").start();
+	}
+
+	synchronized public void start(String fqdn, String apiToken, Protocol protocol) throws NoojeeContactApiException
+	{
+		this.api = new NoojeeContactApi(fqdn, apiToken, protocol);
 
 		if (running.get() == true)
 			throw new IllegalStateException("The PBXMonitor is already running.");
@@ -238,7 +251,7 @@ public enum PBXMonitor
 					Thread.sleep(30000);
 				}
 				else
-					_subscribe(endPoints, "main+"+source);
+					_subscribe(endPoints, "main+" + source);
 
 				// logger.error("Looping on Thread " + Thread.currentThread().getId());
 
@@ -287,13 +300,12 @@ public enum PBXMonitor
 			SubscribeResponse response = api.subscribe(
 					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo,
 					30, debugArg);
-			
+
 			if (response == null)
 			{
 				logger.error("Subscribe returned null. PBX is probably down for maintenance");
 				return null; // pbx is probably down
 			}
-	
 
 			// update the sequence no. from the response so we don't miss any data.
 			seqenceNo = response.seq;
@@ -598,9 +610,15 @@ public enum PBXMonitor
 		return api.dial(phoneNumber, endPoint, phoneCaption, autoAnswer, clid, recordCall, tagCall);
 	}
 
-	public void hangup(EndPoint endPoint) throws NoojeeContactApiException
+	public DialResponse internalDial(EndPoint DialedEndPoint, EndPoint DialingEndPoint, String phoneCaption,
+			AutoAnswer autoAnswer, EndPoint clid, boolean recordCall, String tagCall) throws NoojeeContactApiException
 	{
-		api.hangup(endPoint);
-
+		return api.internalDial(DialedEndPoint, DialingEndPoint, phoneCaption, autoAnswer, clid, recordCall, tagCall);
 	}
+
+	public SimpleResponse hangup(EndPoint endPoint) throws NoojeeContactApiException
+	{
+		return api.hangup(endPoint);
+	}
+
 }
