@@ -46,7 +46,7 @@ public enum PBXMonitor
 
 	PBXMonitor()
 	{
-		logger.error("Starting PBX Monitor");
+		logger.info("Starting PBX Monitor");
 		// Throwable trace = new Throwable();
 		// logger.error(trace, trace);
 	}
@@ -72,7 +72,7 @@ public enum PBXMonitor
 
 	synchronized public void stop()
 	{
-		logger.error("Stopping PBXMonitor.");
+		logger.info("Stopping PBXMonitor.");
 		running.set(false);
 		api = null;
 	}
@@ -124,7 +124,7 @@ public enum PBXMonitor
 
 				oneOffSubscription.add(wrapper);
 			}
-			logger.error("Added subscription for: " + endPoint.extensionNo);
+			logger.debug("Added subscription for: " + endPoint.extensionNo);
 
 		}
 
@@ -135,7 +135,7 @@ public enum PBXMonitor
 			// waiting for the next subscribeLoop (takes 30 seconds).
 			// On the next subscribe loop these new end points will be include
 			// hence we only need to do this once.
-			logger.error("Triggering one off subscription. on Thread " + Thread.currentThread().getId());
+			logger.debug("Triggering one off subscription. on Thread " + Thread.currentThread().getId());
 
 			// we are using a limited pool which could become a bottle neck if a lot of
 			// new handsets are subscribed simultaneously (via separate subscribe calls).
@@ -172,10 +172,10 @@ public enum PBXMonitor
 	{
 		try
 		{
-			logger.error("#######################################################");
-			logger.error("shortSubscribeLoop is starting for "
+			logger.debug("#######################################################");
+			logger.debug("shortSubscribeLoop is starting for "
 					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")));
-			logger.error("#######################################################");
+			logger.debug("#######################################################");
 
 			while (running.get())
 			{
@@ -192,7 +192,7 @@ public enum PBXMonitor
 
 				if (!required)
 				{
-					logger.error("ShortSubscribeLoop no longer required on Thread " + Thread.currentThread().getId());
+					logger.debug("ShortSubscribeLoop no longer required on Thread " + Thread.currentThread().getId());
 					break;
 				}
 
@@ -209,9 +209,9 @@ public enum PBXMonitor
 		}
 		finally
 		{
-			logger.error("#######################################################");
-			logger.error("shortSubscribeLoop is exiting");
-			logger.error("#######################################################");
+			logger.debug("#######################################################");
+			logger.debug("shortSubscribeLoop is exiting");
+			logger.debug("#######################################################");
 
 		}
 
@@ -223,9 +223,9 @@ public enum PBXMonitor
 
 		try
 		{
-			logger.error("#######################################################");
-			logger.error("mainSubscribeLoop is starting");
-			logger.error("#######################################################");
+			logger.debug("#######################################################");
+			logger.debug("mainSubscribeLoop is starting");
+			logger.debug("#######################################################");
 
 			while (running.get())
 			{
@@ -234,7 +234,7 @@ public enum PBXMonitor
 				// subscribe to the list of end points.
 				if (endPoints.size() == 0)
 				{
-					logger.info("mainSubscribeLoop sleeping as no endPoints to monitor");
+					logger.debug("mainSubscribeLoop sleeping as no endPoints to monitor");
 					Thread.sleep(30000);
 				}
 				else
@@ -251,24 +251,24 @@ public enum PBXMonitor
 
 		finally
 		{
-			logger.error("#######################################################");
-			logger.error("mainSubscribeLoop is exiting");
-			logger.error("#######################################################");
+			logger.debug("#######################################################");
+			logger.debug("mainSubscribeLoop is exiting");
+			logger.debug("#######################################################");
 
 			// looks like we terminated abnormally so restart the loop.
 			if (running.get() == true)
 			{
-				logger.error("#######################################################");
-				logger.error("mainSubscribeLoop is restarting after abnormal termination");
-				logger.error("#######################################################");
+				logger.warn("#######################################################");
+				logger.warn("mainSubscribeLoop is restarting after abnormal termination");
+				logger.warn("#######################################################");
 
 				subscriptionLoopPool.submit(() -> mainSubscribeLoop(source));
 			}
 			else
 			{
-				logger.error("#######################################################");
-				logger.error("mainSubscribeLoop is not restarting as running = false");
-				logger.error("#######################################################");
+				logger.debug("#######################################################");
+				logger.debug("mainSubscribeLoop is not restarting as running = false");
+				logger.debug("#######################################################");
 			}
 
 		}

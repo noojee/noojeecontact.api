@@ -95,7 +95,7 @@ public class NoojeeContactApi
 
 		SimpleResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SimpleResponse.class);
 
-		logger.info("hangup for " + extenOrUniqueId + " result : " + hangupResponse.Code + " Message: "
+		logger.debug("hangup for " + extenOrUniqueId + " result : " + hangupResponse.Code + " Message: "
 				+ hangupResponse.Message);
 		return hangupResponse;
 	}
