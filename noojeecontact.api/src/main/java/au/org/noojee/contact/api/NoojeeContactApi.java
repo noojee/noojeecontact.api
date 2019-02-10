@@ -27,6 +27,12 @@ public class NoojeeContactApi
 	private String authToken;
 	private Protocol protocol;
 
+	
+	public NoojeeContactApi(String fqdn, String authToken)
+	{
+		this( fqdn,  authToken, Protocol.HTTPS);
+	}
+
 	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol)
 	{
 		this.fqdn = fqdn;
