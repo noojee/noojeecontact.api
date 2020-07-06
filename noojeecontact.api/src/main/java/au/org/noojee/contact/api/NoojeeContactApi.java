@@ -27,10 +27,9 @@ public class NoojeeContactApi
 	private String authToken;
 	private Protocol protocol;
 
-	
 	public NoojeeContactApi(String fqdn, String authToken)
 	{
-		this( fqdn,  authToken, Protocol.HTTPS);
+		this(fqdn, authToken, Protocol.HTTPS);
 	}
 
 	public NoojeeContactApi(String fqdn, String authToken, Protocol protocol)
@@ -467,14 +466,17 @@ public class NoojeeContactApi
 		{
 			List<EndPointEvent> allEvents = new ArrayList<>();
 
-			for (String extensionNo : endPointEventMap.keySet())
+			if (endPointEventMap != null)
 			{
-				List<Event> endPointEvents = endPointEventMap.get(extensionNo);
-
-				for (Event event : endPointEvents)
+				for (String extensionNo : endPointEventMap.keySet())
 				{
-					EndPointEvent endPointEvent = new EndPointEvent(extensionNo, event);
-					allEvents.add(endPointEvent);
+					List<Event> endPointEvents = endPointEventMap.get(extensionNo);
+
+					for (Event event : endPointEvents)
+					{
+						EndPointEvent endPointEvent = new EndPointEvent(extensionNo, event);
+						allEvents.add(endPointEvent);
+					}
 				}
 			}
 
