@@ -95,7 +95,7 @@ public class GsonForNoojeeContact
 	}
 
 	/**
-	 * Special Gson Adaptors for Saasu types and some that gson doesn't support out of the box.
+	 * Special Gson Adaptors for  types that gson doesn't support out of the box.
 	 */
 
 	/**
