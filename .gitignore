@@ -2,3 +2,8 @@
 /.settings/
 /.classpath
 /.project
+test/allocations.json
+test/campaigns.json
+test/recordings.json
+test/templates.json
+test/dart.zip
