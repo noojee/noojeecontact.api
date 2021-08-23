@@ -138,6 +138,24 @@ public class NoojeeContactApi
 
 		return hangupResponse;
 	}
+	
+	/// A low level entry point to post a url which takes [query] as part of the url.
+	// doesn't support posting data.
+	public SimpleResponse post(String urlString, String query)
+			throws NoojeeContactApiException
+	{
+		NoojeeContactProtocalImpl gateway = NoojeeContactProtocalImpl.getInstance();
+
+
+		URL url = gateway.generateURL(urlString, authToken, query);
+
+		HTTPResponse response = gateway.request(HTTPMethod.POST, url, null, "application/x-www-form-urlencoded");
+
+		SimpleResponse hangupResponse = GsonForNoojeeContact.fromJson(response.getResponseBody(), SimpleResponse.class);
+
+		return hangupResponse;
+	}
+
 
 	public SimpleResponse startRecording(UniqueCallId uniqueCallId, String username, String tag)
 			throws NoojeeContactApiException

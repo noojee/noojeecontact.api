@@ -61,6 +61,23 @@ public class NoojeeContactProtocalImpl
 		return url;
 
 	}
+	/// takes [urlString] and adds the apiKey and query to the url
+	public URL generateURL(String urlString, String apiKey, String query)
+	{
+		URL url = null;
+		try
+		{
+			url = new URL(urlString + "?apiKey=" + apiKey
+					+ (query != null ? "&" + query : ""));
+		}
+		catch (MalformedURLException e)
+		{
+			logger.error(e, e);
+		}
+
+		return url;
+
+	}
 
 	HTTPResponse request(HTTPMethod method, URL url, String jsonBody) throws NoojeeContactApiException
 	{
