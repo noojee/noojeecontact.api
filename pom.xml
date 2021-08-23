@@ -23,7 +23,7 @@
 		<snapshotRepository>
 			<id>snapshots</id>
 			<name>nit-snapshots</name>
-			<url>https://nit.jfrog.io/nit/libs-snapshot-local</url>
+			<url>https://auditor.noojee.com.au/artifactory/nit-libs-snapshot-local</url>
 		</snapshotRepository>
 	</distributionManagement>
 
