@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -20,7 +22,8 @@ import au.org.noojee.contact.api.NoojeeContactApi.SimpleResponse;
 import au.org.noojee.contact.api.NoojeeContactApi.SubscribeResponse;
 
 /**
- * A wrapper for the subscribe REST end point which allows a user to monitor activity for a particular extension.
+ * A wrapper for the subscribe REST end point which allows a user to monitor
+ * activity for a particular extension.
  * 
  * @author bsutton
  */
@@ -53,9 +56,10 @@ public enum PBXMonitor
 	}
 
 	/**
-	 * Start the activity monitor. You will normally start the activity monitor as soon as your application starts and
-	 * leave it running until your applications shutsdown. If the activity monitor is disconnected from PBX it will
-	 * automatically reconnect however some events will have been lost.
+	 * Start the activity monitor. You will normally start the activity monitor
+	 * as soon as your application starts and leave it running until your
+	 * applications shutsdown. If the activity monitor is disconnected from PBX
+	 * it will automatically reconnect however some events will have been lost.
 	 * 
 	 * @throws NoojeeContactApiException
 	 */
@@ -71,7 +75,6 @@ public enum PBXMonitor
 		new Thread(() -> mainSubscribeLoop("PBXMonitor-start()"), "PBXMonitor:mainSubscribeLoop").start();
 	}
 
-	
 	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
 	{
 		start(fqdn, apiToken, Protocol.HTTPS);
@@ -147,6 +150,12 @@ public enum PBXMonitor
 
 		}
 
+		synchronized (mainLoopLatch)
+		{
+			// wake the main loop in case it has gone to sleep.
+			mainLoopLatch.countDown();
+		}
+
 		if (!oneOffSubscription.isEmpty())
 		{
 			// We found a new end point so we do a one off subscription.
@@ -156,8 +165,10 @@ public enum PBXMonitor
 			// hence we only need to do this once.
 			logger.debug("Triggering one off subscription. on Thread " + Thread.currentThread().getId());
 
-			// we are using a limited pool which could become a bottle neck if a lot of
-			// new handsets are subscribed simultaneously (via separate subscribe calls).
+			// we are using a limited pool which could become a bottle neck if a
+			// lot of
+			// new handsets are subscribed simultaneously (via separate
+			// subscribe calls).
 			subscriptionLoopPool.submit(() -> shortSubscribeLoop(oneOffSubscription, source));
 		}
 	}
@@ -175,14 +186,16 @@ public enum PBXMonitor
 
 			if (subscribers.isEmpty())
 			{
-				// no more subscribers for this end point so remove the end point.
+				// no more subscribers for this end point so remove the end
+				// point.
 				subscriptions.remove(endPoint);
 			}
 		}
 	}
 
 	/**
-	 * Used to satisfy a new subscription until the main poll loop returns and can take over.
+	 * Used to satisfy a new subscription until the main poll loop returns and
+	 * can take over.
 	 * 
 	 * @param endPoints
 	 * @return
@@ -218,7 +231,8 @@ public enum PBXMonitor
 				// subscribe to the list of end points.
 				_subscribe(endPoints, "short+" + source);
 
-				// logger.error("ShortSubscribeLoop looping on Thread " + Thread.currentThread().getId());
+				// logger.error("ShortSubscribeLoop looping on Thread " +
+				// Thread.currentThread().getId());
 
 			}
 		}
@@ -237,6 +251,8 @@ public enum PBXMonitor
 		return null;
 	}
 
+	private CountDownLatch mainLoopLatch = new CountDownLatch(1);
+
 	private Void mainSubscribeLoop(String source)
 	{
 
@@ -254,12 +270,17 @@ public enum PBXMonitor
 				if (endPoints.size() == 0)
 				{
 					logger.debug("mainSubscribeLoop sleeping as no endPoints to monitor");
-					Thread.sleep(30000);
+					synchronized (mainLoopLatch)
+					{
+						mainLoopLatch = new CountDownLatch(1);
+						mainLoopLatch.await(30, TimeUnit.SECONDS);
+					}
 				}
 				else
 					_subscribe(endPoints, "main+" + source);
 
-				// logger.error("Looping on Thread " + Thread.currentThread().getId());
+				// logger.error("Looping on Thread " +
+				// Thread.currentThread().getId());
 
 			}
 		}
@@ -300,12 +321,13 @@ public enum PBXMonitor
 		try
 		{
 			// logger.error("http subscribe request sent for "
-			// + endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+			// + endPoints.stream().map(e ->
+			// e.getExtensionNo()).collect(Collectors.joining(",")) + " on
+			// Thread"
 			// + Thread.currentThread().getId());
 
 			SubscribeResponse response = api.subscribe(
-					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo,
-					30, debugArg);
+					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo, 30, debugArg);
 
 			if (response == null)
 			{
@@ -313,11 +335,14 @@ public enum PBXMonitor
 				return null; // pbx is probably down
 			}
 
-			// update the sequence no. from the response so we don't miss any data.
+			// update the sequence no. from the response so we don't miss any
+			// data.
 			seqenceNo = response.seq;
 
 			// logger.error("http subscribe response recieved for "
-			// + endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")) + " on Thread"
+			// + endPoints.stream().map(e ->
+			// e.getExtensionNo()).collect(Collectors.joining(",")) + " on
+			// Thread"
 			// + Thread.currentThread().getId());
 
 			List<EndPointEvent> events = response.getEvents();
@@ -335,24 +360,27 @@ public enum PBXMonitor
 
 				switch (event.getStatus())
 				{
-					// we use a thread pool (of 1) to do the callbacks as the doSubscribe thread can be
-					// interrupted but we don't want end user code to be interrupted in unexpected manner.
-					// The thread pool isolates the user code from our problems when we get cancelled.
-					case Connected:
-						subscriberCallbackPool.execute(() -> notifiyConnected(endPoint, event));
-						break;
-					case DialingOut:
-						subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
-						break;
-					case Hungup:
-						subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
-						break;
-					case Ringing:
-						subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
-						break;
-					default:
-						System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
-						break;
+				// we use a thread pool (of 1) to do the callbacks as the
+				// doSubscribe thread can be
+				// interrupted but we don't want end user code to be interrupted
+				// in unexpected manner.
+				// The thread pool isolates the user code from our problems when
+				// we get cancelled.
+				case Connected:
+					subscriberCallbackPool.execute(() -> notifiyConnected(endPoint, event));
+					break;
+				case DialingOut:
+					subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
+					break;
+				case Hungup:
+					subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
+					break;
+				case Ringing:
+					subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
+					break;
+				default:
+					System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
+					break;
 				}
 			}
 		}
@@ -401,7 +429,8 @@ public enum PBXMonitor
 		synchronized (subscriptions)
 		{
 			// We need to mark the end points as now being managed by the
-			// main subscribe loop so any short term subscribe loops can shut down.
+			// main subscribe loop so any short term subscribe loops can shut
+			// down.
 			Set<EndPointWrapper> subscribed = subscriptions.keySet();
 			for (EndPointWrapper wrapper : subscribed)
 			{
@@ -435,17 +464,16 @@ public enum PBXMonitor
 
 		List<Subscriber> subscribers = getCopyOfAllSubscribers();
 
-		subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber -> {
+			try
 			{
-				try
-				{
-					subscriber.onError(e);
-				}
-				catch (Throwable e2)
-				{
-					logger.error(e, e2);
-				}
-			});
+				subscriber.onError(e);
+			}
+			catch (Throwable e2)
+			{
+				logger.error(e, e2);
+			}
+		});
 
 	}
 
@@ -453,19 +481,18 @@ public enum PBXMonitor
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-		subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber -> {
+			try
 			{
-				try
-				{
-					subscriber.hungup(event);
-				}
-				catch (Throwable e)
-				{
-					logger.error(e, e);
+				subscriber.hungup(event);
+			}
+			catch (Throwable e)
+			{
+				logger.error(e, e);
 
-				}
+			}
 
-			});
+		});
 
 	}
 
@@ -473,20 +500,19 @@ public enum PBXMonitor
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-		subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber -> {
+			try
 			{
-				try
-				{
 
-					subscriber.dialing(event);
-				}
-				catch (Throwable e)
-				{
-					logger.error(e, e);
+				subscriber.dialing(event);
+			}
+			catch (Throwable e)
+			{
+				logger.error(e, e);
 
-				}
+			}
 
-			});
+		});
 
 	}
 
@@ -494,18 +520,17 @@ public enum PBXMonitor
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-		subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber -> {
+			try
 			{
-				try
-				{
 
-					subscriber.ringing(event);
-				}
-				catch (Throwable e)
-				{
-					logger.error(e, e);
-				}
-			});
+				subscriber.ringing(event);
+			}
+			catch (Throwable e)
+			{
+				logger.error(e, e);
+			}
+		});
 
 	}
 
@@ -513,18 +538,17 @@ public enum PBXMonitor
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
-		subscribers.forEach(subscriber ->
+		subscribers.forEach(subscriber -> {
+			try
 			{
-				try
-				{
-					subscriber.connected(event);
-				}
-				catch (Throwable e)
-				{
-					logger.error(e, e);
+				subscriber.connected(event);
+			}
+			catch (Throwable e)
+			{
+				logger.error(e, e);
 
-				}
-			});
+			}
+		});
 
 	}
 
@@ -551,6 +575,7 @@ public enum PBXMonitor
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Object#hashCode()
 		 */
 		@Override
@@ -564,6 +589,7 @@ public enum PBXMonitor
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override
@@ -588,6 +614,7 @@ public enum PBXMonitor
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
