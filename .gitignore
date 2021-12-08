@@ -9,3 +9,5 @@ test/templates.json
 test/dart.zip
 .factorypath
 .history
+/.apt_generated/
+/.apt_generated_tests/
