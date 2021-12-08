@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>au.com.noojee</groupId>
 	<artifactId>noojeecontact.api</artifactId>
-	<version>1.2</version>
+	<version>1.3</version>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
