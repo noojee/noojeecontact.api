@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>au.com.noojee</groupId>
 	<artifactId>noojeecontact.api</artifactId>
-	<version>1.2</version>
+	<version>1.3</version>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
@@ -25,6 +25,13 @@
 			<name>nit-snapshots</name>
 			<url>https://auditor.noojee.com.au/artifactory/nit-libs-snapshot-local</url>
 		</snapshotRepository>
+		<repository>
+			<!-- these properties are stored in settings.xml, this is handy if you 
+				want to deploy to your own repository -->
+			<id>${distribution.id}</id>
+			<name>${distribution.name}</name>
+			<url>${distribution.url}</url>
+		</repository>
 	</distributionManagement>
 
 	<dependencies>

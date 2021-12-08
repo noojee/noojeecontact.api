@@ -1,16 +1,19 @@
 package au.org.noojee.contact.api;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -31,28 +34,26 @@ public enum PBXMonitor
 {
 	SELF;
 
-	Logger logger = LogManager.getLogger();
+	private final Logger logger = LogManager.getLogger();
 
-	NoojeeContactApi api;
+	private NoojeeContactApi api;
 
-	long seqenceNo = 0;
+	private final AtomicLong seqenceNo = new AtomicLong();
 
 	/**
 	 * Each EndPoint can have multiple subscribers.
 	 */
-	Map<EndPointWrapper, List<Subscriber>> subscriptions = Collections.synchronizedMap(new HashMap<>());
+	private final Map<EndPointWrapper, List<Subscriber>> subscriptions = new ConcurrentHashMap<>();
 
-	private AtomicBoolean running = new AtomicBoolean(false);
+	private final AtomicBoolean running = new AtomicBoolean(false);
 
-	private ExecutorService subscriptionLoopPool = Executors.newFixedThreadPool(10);
+	private final ExecutorService subscriptionLoopPool = Executors.newFixedThreadPool(10);
 
-	private ExecutorService subscriberCallbackPool = Executors.newFixedThreadPool(1);
+	private final ExecutorService subscriberCallbackPool = Executors.newFixedThreadPool(1);
 
-	PBXMonitor()
+	private PBXMonitor()
 	{
 		logger.info("Starting PBX Monitor");
-		// Throwable trace = new Throwable();
-		// logger.error(trace, trace);
 	}
 
 	/**
@@ -65,31 +66,25 @@ public enum PBXMonitor
 	 */
 	synchronized public void start(NoojeeContactApi api) throws NoojeeContactApiException
 	{
-		this.api = api;
 
 		if (running.get() == true)
 			throw new IllegalStateException("The PBXMonitor is already running.");
+
+		this.api = api;
 
 		running.set(true);
 
 		new Thread(() -> mainSubscribeLoop("PBXMonitor-start()"), "PBXMonitor:mainSubscribeLoop").start();
 	}
 
-	synchronized public void start(String fqdn, String apiToken) throws NoojeeContactApiException
+	public void start(String fqdn, String apiToken) throws NoojeeContactApiException
 	{
 		start(fqdn, apiToken, Protocol.HTTPS);
 	}
 
-	synchronized public void start(String fqdn, String apiToken, Protocol protocol) throws NoojeeContactApiException
+	public void start(String fqdn, String apiToken, Protocol protocol) throws NoojeeContactApiException
 	{
-		this.api = new NoojeeContactApi(fqdn, apiToken, protocol);
-
-		if (running.get() == true)
-			throw new IllegalStateException("The PBXMonitor is already running.");
-
-		running.set(true);
-
-		new Thread(() -> mainSubscribeLoop("PBXMonitor-start()"), "PBXMonitor:mainSubscribeLoop").start();
+		start(new NoojeeContactApi(fqdn, apiToken, protocol));
 	}
 
 	synchronized public void stop()
@@ -98,13 +93,6 @@ public enum PBXMonitor
 		running.set(false);
 		api = null;
 	}
-
-	// private void checkStart()
-	// {
-	// // if (api == null)
-	// // throw new IllegalStateException("You must call start() first.");
-	//
-	// }
 
 	synchronized public void subscribe(EndPoint endPoint, Subscriber subscriber, String source)
 	{
@@ -139,6 +127,7 @@ public enum PBXMonitor
 			}
 			else
 			{
+				logger.warn("Adding new EndPoint " + endPoint);
 				// new subscriber
 				List<Subscriber> subscribers = new ArrayList<>();
 				subscribers.add(subscriber);
@@ -176,19 +165,16 @@ public enum PBXMonitor
 	synchronized public void unsubscribe(Subscriber subscriber)
 	{
 		// unsubscribe from all end points.
-		List<EndPointWrapper> endPoints = subscriptions.keySet().stream().collect(Collectors.toList());
-		for (EndPointWrapper endPoint : endPoints)
+		for (Entry<EndPointWrapper, List<Subscriber>> entry : subscriptions.entrySet())
 		{
-			List<Subscriber> subscribers = subscriptions.get(endPoint);
-
-			if (subscribers.contains(subscriber))
-				subscribers.remove(subscriber);
-
+			List<Subscriber> subscribers = entry.getValue();
+			entry.getValue().remove(subscriber);
 			if (subscribers.isEmpty())
 			{
+				logger.warn("Removing EndPoint " + entry.getKey());
 				// no more subscribers for this end point so remove the end
 				// point.
-				subscriptions.remove(endPoint);
+				subscriptions.remove(entry.getKey());
 			}
 		}
 	}
@@ -200,41 +186,19 @@ public enum PBXMonitor
 	 * @param endPoints
 	 * @return
 	 */
-	private Void shortSubscribeLoop(List<EndPointWrapper> endPoints, String source)
+	private void shortSubscribeLoop(List<EndPointWrapper> endPoints, String source)
 	{
 		try
 		{
-			logger.debug("#######################################################");
-			logger.debug("shortSubscribeLoop is starting for "
+			logger.warn("shortSubscribeLoop is starting for "
 					+ endPoints.stream().map(e -> e.getExtensionNo()).collect(Collectors.joining(",")));
-			logger.debug("#######################################################");
 
-			while (running.get())
+			do
 			{
-				// first check that short loop is still needed.
-				boolean required = false;
-				for (EndPointWrapper wrapper : endPoints)
-				{
-					if (wrapper.servicedByMainLoop == false)
-					{
-						required = true;
-						break;
-					}
-				}
-
-				if (!required)
-				{
-					logger.debug("ShortSubscribeLoop no longer required on Thread " + Thread.currentThread().getId());
-					break;
-				}
-
 				// subscribe to the list of end points.
 				_subscribe(endPoints, "short+" + source);
-
-				// logger.error("ShortSubscribeLoop looping on Thread " +
-				// Thread.currentThread().getId());
-
 			}
+			while (running.get() && isShortLoopStillRequired(endPoints));
 		}
 		catch (Throwable e)
 		{
@@ -242,13 +206,28 @@ public enum PBXMonitor
 		}
 		finally
 		{
-			logger.debug("#######################################################");
-			logger.debug("shortSubscribeLoop is exiting");
-			logger.debug("#######################################################");
-
+			logger.info("shortSubscribeLoop is exiting");
 		}
+	}
 
-		return null;
+	// use synchronized to ensure visibility of servicedByMainLoop
+	synchronized private boolean isShortLoopStillRequired(List<EndPointWrapper> endPoints)
+	{
+		// first check that short loop is still needed.
+		boolean required = false;
+		for (EndPointWrapper wrapper : endPoints)
+		{
+			if (wrapper.servicedByMainLoop == false)
+			{
+				required = true;
+				break;
+			}
+		}
+		if (!required)
+		{
+			logger.info("ShortSubscribeLoop no longer required on Thread " + Thread.currentThread().getId());
+		}
+		return required;
 	}
 
 	private CountDownLatch mainLoopLatch = new CountDownLatch(1);
@@ -264,10 +243,8 @@ public enum PBXMonitor
 
 			while (running.get())
 			{
-				List<EndPointWrapper> endPoints = getCopyAndMarkAllEndPoints();
-
 				// subscribe to the list of end points.
-				if (endPoints.size() == 0)
+				if (subscriptions.isEmpty())
 				{
 					logger.debug("mainSubscribeLoop sleeping as no endPoints to monitor");
 					synchronized (mainLoopLatch)
@@ -277,7 +254,10 @@ public enum PBXMonitor
 					}
 				}
 				else
-					_subscribe(endPoints, "main+" + source);
+				{
+					markAllEndPoints();
+					_subscribe(subscriptions.keySet(), "main+" + source);
+				}
 
 				// logger.error("Looping on Thread " +
 				// Thread.currentThread().getId());
@@ -291,32 +271,22 @@ public enum PBXMonitor
 
 		finally
 		{
-			logger.debug("#######################################################");
 			logger.debug("mainSubscribeLoop is exiting");
-			logger.debug("#######################################################");
-
-			// looks like we terminated abnormally so restart the loop.
 			if (running.get() == true)
 			{
+				// looks like we terminated abnormally so restart the loop.
 				logger.warn("#######################################################");
 				logger.warn("mainSubscribeLoop is restarting after abnormal termination");
 				logger.warn("#######################################################");
 
 				subscriptionLoopPool.submit(() -> mainSubscribeLoop(source));
 			}
-			else
-			{
-				logger.debug("#######################################################");
-				logger.debug("mainSubscribeLoop is not restarting as running = false");
-				logger.debug("#######################################################");
-			}
-
 		}
 
 		return null;
 	}
 
-	private Void _subscribe(List<EndPointWrapper> endPoints, String debugArg)
+	private void _subscribe(Collection<EndPointWrapper> endPoints, String debugArg)
 	{
 		try
 		{
@@ -327,61 +297,67 @@ public enum PBXMonitor
 			// + Thread.currentThread().getId());
 
 			SubscribeResponse response = api.subscribe(
-					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo, 30, debugArg);
+					endPoints.stream().map(w -> w.getEndPoint()).collect(Collectors.toList()), seqenceNo.get(), 30,
+					debugArg);
 
-			if (response == null)
+			if (response != null)
+			{
+
+				// update the sequence no. from the response so we don't miss
+				// any
+				// data.
+				seqenceNo.set(response.seq);
+
+				// logger.error("http subscribe response recieved for "
+				// + endPoints.stream().map(e ->
+				// e.getExtensionNo()).collect(Collectors.joining(",")) + " on
+				// Thread"
+				// + Thread.currentThread().getId());
+
+				List<EndPointEvent> events = response.getEvents();
+
+				for (EndPointEvent event : events)
+				{
+					// logger.error("Event: " + event);
+					EndPoint endPoint = event.getEndPoint();
+
+					if (event.getStatus() == null)
+					{
+						logger.warn("_subscribe event status == null {}", event);
+						continue;
+					}
+
+					switch (event.getStatus())
+					{
+					// we use a thread pool (of 1) to do the callbacks as the
+					// doSubscribe thread can be
+					// interrupted but we don't want end user code to be
+					// interrupted
+					// in unexpected manner.
+					// The thread pool isolates the user code from our problems
+					// when
+					// we get cancelled.
+					case Connected:
+						subscriberCallbackPool.execute(() -> notifiyConnected(endPoint, event));
+						break;
+					case DialingOut:
+						subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
+						break;
+					case Hungup:
+						subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
+						break;
+					case Ringing:
+						subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
+						break;
+					default:
+						System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
+						break;
+					}
+				}
+			}
+			else
 			{
 				logger.error("Subscribe returned null. PBX is probably down for maintenance");
-				return null; // pbx is probably down
-			}
-
-			// update the sequence no. from the response so we don't miss any
-			// data.
-			seqenceNo = response.seq;
-
-			// logger.error("http subscribe response recieved for "
-			// + endPoints.stream().map(e ->
-			// e.getExtensionNo()).collect(Collectors.joining(",")) + " on
-			// Thread"
-			// + Thread.currentThread().getId());
-
-			List<EndPointEvent> events = response.getEvents();
-
-			for (EndPointEvent event : events)
-			{
-				// logger.error("Event: " + event);
-				EndPoint endPoint = event.getEndPoint();
-
-				if (event.getStatus() == null)
-				{
-					logger.warn("_subscribe event status == null {}", event);
-					continue;
-				}
-
-				switch (event.getStatus())
-				{
-				// we use a thread pool (of 1) to do the callbacks as the
-				// doSubscribe thread can be
-				// interrupted but we don't want end user code to be interrupted
-				// in unexpected manner.
-				// The thread pool isolates the user code from our problems when
-				// we get cancelled.
-				case Connected:
-					subscriberCallbackPool.execute(() -> notifiyConnected(endPoint, event));
-					break;
-				case DialingOut:
-					subscriberCallbackPool.execute(() -> notifyDialing(endPoint, event));
-					break;
-				case Hungup:
-					subscriberCallbackPool.execute(() -> notifyHangup(endPoint, event));
-					break;
-				case Ringing:
-					subscriberCallbackPool.execute(() -> notifyRinging(endPoint, event));
-					break;
-				default:
-					System.out.println("Unknown EndPoint status: " + event.getStatus().toString());
-					break;
-				}
 			}
 		}
 		catch (NoojeeContactApiException e)
@@ -396,85 +372,66 @@ public enum PBXMonitor
 			}
 			catch (InterruptedException e1)
 			{
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				logger.error(e1);
 			}
 		}
-
-		return null;
 
 	}
 
 	private List<Subscriber> getCopyOfSubscribers(EndPoint endPoint)
 	{
-		List<Subscriber> subscribers = null;
-
-		synchronized (subscriptions)
-		{
-			EndPointWrapper wrapper = new EndPointWrapper(endPoint);
-			List<Subscriber> list = subscriptions.computeIfAbsent(wrapper, w -> new ArrayList<>());
-			subscribers = list.stream().collect(Collectors.toList());
-		}
-		return subscribers;
-
+		EndPointWrapper wrapper = new EndPointWrapper(endPoint);
+		List<Subscriber> result = new LinkedList<>();
+		result.addAll(subscriptions.computeIfAbsent(wrapper, w -> new ArrayList<>()));
+		return result;
 	}
 
 	/*
-	 * Get all of the end points that we have subscriptions on.
+	 * Mark all current subscriptions as serviced by the main loop
 	 */
-	private List<EndPointWrapper> getCopyAndMarkAllEndPoints()
+	// use synchronized to ensure visibility of servicedByMainLoop
+	synchronized private void markAllEndPoints()
 	{
-		List<EndPointWrapper> endPoints = new ArrayList<>();
-
-		synchronized (subscriptions)
+		// We need to mark the end points as now being managed by the
+		// main subscribe loop so any short term subscribe loops can shut
+		// down.
+		Set<EndPointWrapper> subscribed = subscriptions.keySet();
+		for (EndPointWrapper wrapper : subscribed)
 		{
-			// We need to mark the end points as now being managed by the
-			// main subscribe loop so any short term subscribe loops can shut
-			// down.
-			Set<EndPointWrapper> subscribed = subscriptions.keySet();
-			for (EndPointWrapper wrapper : subscribed)
-			{
-				wrapper.servicedByMainLoop = true;
-			}
-
-			endPoints.addAll(subscribed);
+			wrapper.servicedByMainLoop = true;
 		}
-		return endPoints;
-
 	}
 
 	private List<Subscriber> getCopyOfAllSubscribers()
 	{
-
 		List<Subscriber> subscribers = new ArrayList<>();
-
-		synchronized (subscriptions)
+		for (Entry<EndPointWrapper, List<Subscriber>> entry : subscriptions.entrySet())
 		{
-			for (EndPointWrapper endPoint : subscriptions.keySet())
-			{
-				subscribers.addAll(subscriptions.get(endPoint).stream().collect(Collectors.toList()));
-			}
+			subscribers.addAll(entry.getValue());
 		}
 		return subscribers;
 
 	}
 
+	void safeRun(Runnable runnable)
+	{
+		try
+		{
+			runnable.run();
+		}
+		catch (Throwable e2)
+		{
+			logger.error(e2, e2);
+		}
+	}
+
 	private void notifyError(NoojeeContactApiException e)
 	{
-
 		List<Subscriber> subscribers = getCopyOfAllSubscribers();
 
 		subscribers.forEach(subscriber -> {
-			try
-			{
-				subscriber.onError(e);
-			}
-			catch (Throwable e2)
-			{
-				logger.error(e, e2);
-			}
+			safeRun(() -> subscriber.onError(e));
 		});
-
 	}
 
 	private void notifyHangup(EndPoint endPoint, EndPointEvent event)
@@ -482,85 +439,42 @@ public enum PBXMonitor
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
 
 		subscribers.forEach(subscriber -> {
-			try
-			{
-				subscriber.hungup(event);
-			}
-			catch (Throwable e)
-			{
-				logger.error(e, e);
-
-			}
-
+			safeRun(() -> subscriber.hungup(event));
 		});
-
 	}
 
 	private void notifyDialing(EndPoint endPoint, EndPointEvent event)
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
-
 		subscribers.forEach(subscriber -> {
-			try
-			{
-
-				subscriber.dialing(event);
-			}
-			catch (Throwable e)
-			{
-				logger.error(e, e);
-
-			}
-
+			safeRun(() -> subscriber.dialing(event));
 		});
-
 	}
 
 	private void notifyRinging(EndPoint endPoint, EndPointEvent event)
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
-
 		subscribers.forEach(subscriber -> {
-			try
-			{
-
-				subscriber.ringing(event);
-			}
-			catch (Throwable e)
-			{
-				logger.error(e, e);
-			}
+			safeRun(() -> subscriber.ringing(event));
 		});
-
 	}
 
 	private void notifiyConnected(EndPoint endPoint, EndPointEvent event)
 	{
 		List<Subscriber> subscribers = getCopyOfSubscribers(endPoint);
-
 		subscribers.forEach(subscriber -> {
-			try
-			{
-				subscriber.connected(event);
-			}
-			catch (Throwable e)
-			{
-				logger.error(e, e);
-
-			}
+			safeRun(() -> subscriber.connected(event));
 		});
-
 	}
 
 	private static class EndPointWrapper
 	{
 		EndPoint endPoint;
-		boolean servicedByMainLoop;
+		boolean servicedByMainLoop = false;
 
 		public EndPointWrapper(EndPoint endPoint)
 		{
 			this.endPoint = endPoint;
-			this.servicedByMainLoop = false;
 		}
 
 		public EndPoint getEndPoint()
