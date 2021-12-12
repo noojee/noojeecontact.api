@@ -5,6 +5,7 @@
 	<groupId>au.com.noojee</groupId>
 	<artifactId>noojeecontact.api</artifactId>
 	<version>1.3</version>
+	<packaging>jar</packaging>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
@@ -19,20 +20,20 @@
 		</plugins>
 	</build>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<name>nit-snapshots</name>
-			<url>https://auditor.noojee.com.au/artifactory/nit-libs-snapshot-local</url>
-		</snapshotRepository>
-		<repository>
-			<!-- these properties are stored in settings.xml, this is handy if you 
-				want to deploy to your own repository -->
-			<id>${distribution.id}</id>
-			<name>${distribution.name}</name>
-			<url>${distribution.url}</url>
-		</repository>
-	</distributionManagement>
+        <distributionManagement>
+             <snapshotRepository>
+                     <id>snapshots</id>
+                     <name>nit-libs-snapshot</name>
+                     <url>https://auditor.noojee.com.au/artifactory/nit-libs-snapshot-local</url>
+             </snapshotRepository>
+             <repository>
+                     <id>releases</id>
+                     <name>nit-libs-release</name>
+                     <url>https://auditor.noojee.com.au/artifactory/nit-libs-release-local</url>
+             </repository>
+
+        </distributionManagement>
+
 
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
@@ -46,7 +47,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.13.2</version>
+			<version>2.15.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.joda/joda-money -->
