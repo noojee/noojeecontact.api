@@ -11,3 +11,4 @@ test/dart.zip
 .history
 /.apt_generated/
 /.apt_generated_tests/
+.metadata/
