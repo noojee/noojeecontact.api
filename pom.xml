@@ -20,19 +20,13 @@
 		</plugins>
 	</build>
 
-        <distributionManagement>
-             <snapshotRepository>
-                     <id>snapshots</id>
-                     <name>nit-libs-snapshot</name>
-                     <url>https://auditor.noojee.com.au/artifactory/nit-libs-snapshot-local</url>
-             </snapshotRepository>
-             <repository>
-                     <id>releases</id>
-                     <name>nit-libs-release</name>
-                     <url>https://auditor.noojee.com.au/artifactory/nit-libs-release-local</url>
-             </repository>
-
-        </distributionManagement>
+ 	<distributionManagement>
+		<repository>
+			<id>${distribution.id}</id>
+			<name>${distribution.name}</name>
+			<url>${distribution.url}</url>
+		</repository>
+	</distributionManagement>
 
 
 	<dependencies>
